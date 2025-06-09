@@ -91,6 +91,10 @@ memos-lite/
 - `settings` - 系统设置表
 - `user_settings` - 用户设置表
 
+## 部署指南
+
+请参考 [DEPLOYMENT.md](./DEPLOYMENT.md) 获取详细的部署指南。
+
 ## 快速开始
 
 ### 1. 环境准备
@@ -103,7 +107,7 @@ memos-lite/
 ### 2. 克隆和安装
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/vividmuse/memos-lite.git
 cd memos-lite
 pnpm install
 ```
@@ -130,7 +134,7 @@ pnpm deploy
 cd packages/web
 
 # 配置 API 地址
-# 编辑 .env 文件，设置 VITE_API_BASE_URL
+# 编辑 .env 文件，设置 VITE_API_URL
 
 # 构建前端
 pnpm build
@@ -146,7 +150,7 @@ pnpm build
 - 数据库绑定配置
 
 ### 前端配置 (.env)
-- `VITE_API_BASE_URL`: 后端 API 地址
+- `VITE_API_URL`: 后端 API 地址
 
 ## 系统设置
 
@@ -170,4 +174,4 @@ MIT License
 
 ## 贡献
 
-欢迎提交 Issue 和 Pull Request！ 
+欢迎提交 Issue 和 Pull Request！
