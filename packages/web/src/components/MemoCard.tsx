@@ -4,12 +4,10 @@ import {
   PinIcon, 
   EyeIcon, 
   LockIcon, 
-  MessageSquareIcon, 
-  CalendarIcon,
+  MessageSquareIcon,
   CopyIcon,
   EditIcon,
   MoreHorizontalIcon,
-  TagIcon,
   HashIcon,
   ClockIcon
 } from 'lucide-react'

@@ -7,7 +7,6 @@ import {
   LogOutIcon,
   SunIcon,
   MoonIcon,
-  PlusIcon,
   MenuIcon,
   XIcon
 } from 'lucide-react'
