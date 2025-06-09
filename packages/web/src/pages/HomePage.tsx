@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { SearchIcon, TagIcon, FilterIcon, PlusIcon, HashIcon } from 'lucide-react'
+import { SearchIcon, PlusIcon, FilterIcon } from 'lucide-react'
 import { memoApi, tagApi } from '@/utils/api'
 import { useMemoStore, useTagStore } from '@/store'
 import { Memo, Tag } from '@/types'
@@ -105,173 +105,202 @@ export default function HomePage() {
 
   const hasActiveFilters = selectedVisibility !== 'ALL' || selectedTag || searchTerm
 
+  // 清除所有过滤器
+  const clearAllFilters = () => {
+    setSearchTerm('')
+    setSelectedVisibility('ALL')
+    setSelectedTag(null)
+    setShowFilters(false)
+  }
+
   return (
     <div className="space-y-6">
-      {/* 页面头部 */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">我的备忘录</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            总计 {memoStats.total} 条，今日新增 {memoStats.todayCount} 条
-          </p>
-        </div>
-        
-        <button
-          onClick={() => setShowEditor(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-        >
-          <PlusIcon className="w-4 h-4" />
-          新建备忘录
-        </button>
+      {/* 写作区域 */}
+      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm">
+        {showEditor ? (
+          <div className="p-4">
+            <MemoEditor 
+              onSave={handleMemoCreated}
+              onClose={() => setShowEditor(false)}
+            />
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowEditor(true)}
+            className="w-full p-4 text-left text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <PlusIcon className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm">写下你的想法...</span>
+            </div>
+          </button>
+        )}
       </div>
 
       {/* 搜索和过滤 */}
-      <div className="space-y-4">
-        {/* 搜索栏 */}
+      <div className="space-y-3">
+        {/* 主搜索栏 */}
         <div className="relative">
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="搜索备忘录内容..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="搜索备忘录..."
+            className="w-full pl-10 pr-12 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-sm placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
           />
-        </div>
-
-        {/* 过滤器 */}
-        <div className="flex flex-wrap items-center gap-2">
+          {/* 过滤器按钮 */}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-colors ${
+            className={`absolute right-2 top-1/2 transform -translate-y-1/2 p-1.5 rounded-md transition-colors ${
               hasActiveFilters || showFilters
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
             }`}
           >
             <FilterIcon className="w-4 h-4" />
-            过滤器
-            {hasActiveFilters && (
-              <span className="ml-1 px-1.5 py-0.5 bg-blue-600 text-white text-xs rounded-full">
-                {[selectedVisibility !== 'ALL', selectedTag, searchTerm].filter(Boolean).length}
-              </span>
-            )}
           </button>
-
-          {/* 快捷过滤 */}
-          {['ALL', 'PUBLIC', 'PRIVATE'].map((visibility) => (
-            <button
-              key={visibility}
-              onClick={() => setSelectedVisibility(visibility as any)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                selectedVisibility === visibility
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              {visibility === 'ALL' ? '全部' : visibility === 'PUBLIC' ? '公开' : '私有'}
-            </button>
-          ))}
         </div>
 
-        {/* 展开的过滤器 */}
+        {/* 过滤器面板 */}
         {showFilters && (
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
-            {/* 标签过滤 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                按标签过滤
-              </label>
-              <div className="flex flex-wrap gap-2">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white">过滤选项</h3>
+              {hasActiveFilters && (
                 <button
-                  onClick={() => setSelectedTag(null)}
-                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-colors ${
-                    !selectedTag
-                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
+                  onClick={clearAllFilters}
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
                 >
-                  全部标签
+                  清除全部
                 </button>
-                {tags.map((tag: Tag) => (
+              )}
+            </div>
+
+            {/* 可见性过滤 */}
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                可见性
+              </label>
+              <div className="flex gap-1">
+                {(['ALL', 'PUBLIC', 'PRIVATE'] as const).map((visibility) => (
                   <button
-                    key={tag.id}
-                    onClick={() => setSelectedTag(selectedTag === tag.name ? null : tag.name)}
-                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-colors ${
-                      selectedTag === tag.name
-                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    key={visibility}
+                    onClick={() => setSelectedVisibility(visibility)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      selectedVisibility === visibility
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                   >
-                    <HashIcon className="w-3 h-3" />
-                    {tag.name}
+                    {visibility === 'ALL' ? '全部' : visibility === 'PUBLIC' ? '公开' : '私有'}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* 重置过滤器 */}
-            {hasActiveFilters && (
-              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={() => {
-                    setSearchTerm('')
-                    setSelectedVisibility('ALL')
-                    setSelectedTag(null)
-                  }}
-                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                >
-                  清除所有过滤器
-                </button>
+            {/* 标签过滤 */}
+            {tags.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  标签
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSelectedTag(null)}
+                    className={`px-3 py-1.5 rounded-full text-xs transition-colors ${
+                      !selectedTag
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    全部标签
+                  </button>
+                  {tags.slice(0, 10).map((tag: Tag) => (
+                    <button
+                      key={tag.id}
+                      onClick={() => setSelectedTag(selectedTag === tag.name ? null : tag.name)}
+                      className={`px-3 py-1.5 rounded-full text-xs transition-colors ${
+                        selectedTag === tag.name
+                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      #{tag.name}
+                    </button>
+                  ))}
+                </div>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* 活跃过滤器显示 */}
+        {hasActiveFilters && !showFilters && (
+          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+            <span>活跃过滤器:</span>
+            {selectedVisibility !== 'ALL' && (
+              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+                {selectedVisibility === 'PUBLIC' ? '公开' : '私有'}
+              </span>
+            )}
+            {selectedTag && (
+              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+                #{selectedTag}
+              </span>
+            )}
+            {searchTerm && (
+              <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full">
+                搜索: {searchTerm}
+              </span>
             )}
           </div>
         )}
       </div>
 
+      {/* 统计信息 */}
+      {memoStats.total > 0 && (
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          共 {memoStats.total} 条备忘录
+          {memoStats.todayCount > 0 && (
+            <span>，今日新增 {memoStats.todayCount} 条</span>
+          )}
+        </div>
+      )}
+
       {/* 备忘录列表 */}
       <div className="space-y-4">
         {memosLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="flex items-center justify-center py-12">
+            <div className="text-gray-500 dark:text-gray-400">加载中...</div>
           </div>
         ) : memos.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-gray-400 dark:text-gray-500 mb-4">
-              <TagIcon className="w-12 h-12 mx-auto mb-4" />
+            <div className="text-gray-500 dark:text-gray-400 mb-2">
               {hasActiveFilters ? '没有找到匹配的备忘录' : '还没有备忘录'}
             </div>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">
-              {hasActiveFilters ? '尝试调整过滤条件' : '点击上方按钮创建你的第一条备忘录'}
-            </p>
             {!hasActiveFilters && (
               <button
                 onClick={() => setShowEditor(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
               >
-                <PlusIcon className="w-4 h-4" />
-                新建备忘录
+                写下第一条备忘录
               </button>
             )}
           </div>
         ) : (
           memos.map((memo: Memo) => (
-            <MemoCard key={memo.id} memo={memo} />
+            <MemoCard 
+              key={memo.id} 
+              memo={memo}
+              onEdit={(editMemo) => {
+                // TODO: 实现编辑功能
+                console.log('Edit memo:', editMemo)
+              }}
+            />
           ))
         )}
       </div>
-
-      {/* 编辑器模态框 */}
-      {showEditor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-lg shadow-xl overflow-hidden">
-                         <MemoEditor
-               onSave={handleMemoCreated}
-               onClose={() => setShowEditor(false)}
-             />
-          </div>
-        </div>
-      )}
     </div>
   )
 } 

@@ -55,13 +55,16 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
   }
 }
 
-/* Prose 样式 - 类似 @tailwindcss/typography */
+/* Enhanced Prose Styles - 类似 @tailwindcss/typography 但更适合 memos */
 .prose {
-  color: #374151;
-  max-width: 65ch;
+  color: rgb(55 65 81);
+  max-width: none;
+  line-height: 1.75;
 }
 
 .prose-sm {
@@ -69,9 +72,22 @@
   line-height: 1.7142857;
 }
 
-.prose-sm :where(p):not(:where([class~="not-prose"] *)) {
+.prose :where(p):not(:where([class~="not-prose"] *)) {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+}
+
+.prose :where(p):not(:where([class~="not-prose"] *)) {
   margin-top: 1.1428571em;
   margin-bottom: 1.1428571em;
+}
+
+.prose :where([class~="lead"]):not(:where([class~="not-prose"] *)) {
+  color: rgb(107 114 128);
+  font-size: 1.25em;
+  line-height: 1.6;
+  margin-top: 1.2em;
+  margin-bottom: 1.2em;
 }
 
 .prose-sm :where([class~="lead"]):not(:where([class~="not-prose"] *)) {
@@ -81,10 +97,31 @@
   margin-bottom: 0.8888889em;
 }
 
+.prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+  font-weight: 500;
+  font-style: italic;
+  color: rgb(17 24 39);
+  border-left-width: 0.25rem;
+  border-left-color: rgb(229 231 235);
+  quotes: "\201C""\201D""\2018""\2019";
+  margin-top: 1.6em;
+  margin-bottom: 1.6em;
+  padding-left: 1em;
+}
+
 .prose-sm :where(blockquote):not(:where([class~="not-prose"] *)) {
   margin-top: 1.3333333em;
   margin-bottom: 1.3333333em;
   padding-left: 1.1111111em;
+}
+
+.prose :where(h1):not(:where([class~="not-prose"] *)) {
+  color: rgb(17 24 39);
+  font-weight: 800;
+  font-size: 2.25em;
+  margin-top: 0;
+  margin-bottom: 0.8888889em;
+  line-height: 1.1111111;
 }
 
 .prose-sm :where(h1):not(:where([class~="not-prose"] *)) {
@@ -94,11 +131,29 @@
   line-height: 1.2;
 }
 
+.prose :where(h2):not(:where([class~="not-prose"] *)) {
+  color: rgb(17 24 39);
+  font-weight: 700;
+  font-size: 1.5em;
+  margin-top: 2em;
+  margin-bottom: 1em;
+  line-height: 1.3333333;
+}
+
 .prose-sm :where(h2):not(:where([class~="not-prose"] *)) {
   font-size: 1.4285714em;
   margin-top: 1.6em;
   margin-bottom: 0.8em;
   line-height: 1.4;
+}
+
+.prose :where(h3):not(:where([class~="not-prose"] *)) {
+  color: rgb(17 24 39);
+  font-weight: 600;
+  font-size: 1.25em;
+  margin-top: 1.6em;
+  margin-bottom: 0.6em;
+  line-height: 1.6;
 }
 
 .prose-sm :where(h3):not(:where([class~="not-prose"] *)) {
@@ -108,10 +163,24 @@
   line-height: 1.5555556;
 }
 
+.prose :where(h4):not(:where([class~="not-prose"] *)) {
+  color: rgb(17 24 39);
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.5;
+}
+
 .prose-sm :where(h4):not(:where([class~="not-prose"] *)) {
   margin-top: 1.4285714em;
   margin-bottom: 0.5714286em;
   line-height: 1.4285714;
+}
+
+.prose :where(img):not(:where([class~="not-prose"] *)) {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  border-radius: 0.5rem;
 }
 
 .prose-sm :where(img):not(:where([class~="not-prose"] *)) {
@@ -119,9 +188,20 @@
   margin-bottom: 1.7142857em;
 }
 
+.prose :where(video):not(:where([class~="not-prose"] *)) {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  border-radius: 0.5rem;
+}
+
 .prose-sm :where(video):not(:where([class~="not-prose"] *)) {
   margin-top: 1.7142857em;
   margin-bottom: 1.7142857em;
+}
+
+.prose :where(figure):not(:where([class~="not-prose"] *)) {
+  margin-top: 2em;
+  margin-bottom: 2em;
 }
 
 .prose-sm :where(figure):not(:where([class~="not-prose"] *)) {
@@ -129,9 +209,21 @@
   margin-bottom: 1.7142857em;
 }
 
+.prose :where(figure > *):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
 .prose-sm :where(figure > *):not(:where([class~="not-prose"] *)) {
   margin-top: 0;
   margin-bottom: 0;
+}
+
+.prose :where(figcaption):not(:where([class~="not-prose"] *)) {
+  color: rgb(107 114 128);
+  font-size: 0.875em;
+  line-height: 1.4285714;
+  margin-top: 0.8571429em;
 }
 
 .prose-sm :where(figcaption):not(:where([class~="not-prose"] *)) {
@@ -140,16 +232,57 @@
   margin-top: 0.6666667em;
 }
 
+.prose :where(code):not(:where([class~="not-prose"] *)) {
+  color: rgb(17 24 39);
+  font-weight: 600;
+  font-size: 0.875em;
+  background-color: rgb(243 244 246);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
 .prose-sm :where(code):not(:where([class~="not-prose"] *)) {
   font-size: 0.8571429em;
+}
+
+.prose :where(a code):not(:where([class~="not-prose"] *)) {
+  color: rgb(17 24 39);
+}
+
+.prose :where(h1 code):not(:where([class~="not-prose"] *)) {
+  font-size: 0.8888889em;
+}
+
+.prose :where(h2 code):not(:where([class~="not-prose"] *)) {
+  font-size: 0.875em;
 }
 
 .prose-sm :where(h2 code):not(:where([class~="not-prose"] *)) {
   font-size: 0.9em;
 }
 
+.prose :where(h3 code):not(:where([class~="not-prose"] *)) {
+  font-size: 0.9em;
+}
+
 .prose-sm :where(h3 code):not(:where([class~="not-prose"] *)) {
   font-size: 0.8888889em;
+}
+
+.prose :where(pre):not(:where([class~="not-prose"] *)) {
+  color: rgb(229 231 235);
+  background-color: rgb(17 24 39);
+  overflow-x: auto;
+  font-weight: 400;
+  font-size: 0.875em;
+  line-height: 1.7142857;
+  margin-top: 1.7142857em;
+  margin-bottom: 1.7142857em;
+  border-radius: 0.375rem;
+  padding-top: 0.8571429em;
+  padding-right: 1.1428571em;
+  padding-bottom: 0.8571429em;
+  padding-left: 1.1428571em;
 }
 
 .prose-sm :where(pre):not(:where([class~="not-prose"] *)) {
@@ -164,81 +297,55 @@
   padding-left: 1em;
 }
 
-.prose-sm :where(ol):not(:where([class~="not-prose"] *)) {
-  margin-top: 1.1428571em;
-  margin-bottom: 1.1428571em;
-  padding-left: 1.5714286em;
+.prose :where(pre code):not(:where([class~="not-prose"] *)) {
+  background-color: transparent;
+  border-width: 0;
+  border-radius: 0;
+  padding: 0;
+  font-weight: inherit;
+  color: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
 }
 
-.prose-sm :where(ul):not(:where([class~="not-prose"] *)) {
-  margin-top: 1.1428571em;
-  margin-bottom: 1.1428571em;
-  padding-left: 1.5714286em;
+.prose :where(pre code):not(:where([class~="not-prose"] *)):before {
+  content: none;
 }
 
-.prose-sm :where(li):not(:where([class~="not-prose"] *)) {
-  margin-top: 0.2857143em;
-  margin-bottom: 0.2857143em;
+.prose :where(pre code):not(:where([class~="not-prose"] *)):after {
+  content: none;
 }
 
-.prose-sm :where(ol > li):not(:where([class~="not-prose"] *)) {
-  padding-left: 0.4285714em;
-}
-
-.prose-sm :where(ul > li):not(:where([class~="not-prose"] *)) {
-  padding-left: 0.4285714em;
-}
-
-.prose-sm :where(.prose-sm > ul > li p):not(:where([class~="not-prose"] *)) {
-  margin-top: 0.5714286em;
-  margin-bottom: 0.5714286em;
-}
-
-.prose-sm :where(.prose-sm > ul > li > *:first-child):not(:where([class~="not-prose"] *)) {
-  margin-top: 1.1428571em;
-}
-
-.prose-sm :where(.prose-sm > ul > li > *:last-child):not(:where([class~="not-prose"] *)) {
-  margin-bottom: 1.1428571em;
-}
-
-.prose-sm :where(.prose-sm > ol > li > *:first-child):not(:where([class~="not-prose"] *)) {
-  margin-top: 1.1428571em;
-}
-
-.prose-sm :where(.prose-sm > ol > li > *:last-child):not(:where([class~="not-prose"] *)) {
-  margin-bottom: 1.1428571em;
-}
-
-.prose-sm :where(ul ul, ul ol, ol ul, ol ol):not(:where([class~="not-prose"] *)) {
-  margin-top: 0.5714286em;
-  margin-bottom: 0.5714286em;
-}
-
-.prose-sm :where(hr):not(:where([class~="not-prose"] *)) {
-  margin-top: 2.8571429em;
-  margin-bottom: 2.8571429em;
-}
-
-.prose-sm :where(hr + *):not(:where([class~="not-prose"] *)) {
-  margin-top: 0;
-}
-
-.prose-sm :where(h2 + *):not(:where([class~="not-prose"] *)) {
-  margin-top: 0;
-}
-
-.prose-sm :where(h3 + *):not(:where([class~="not-prose"] *)) {
-  margin-top: 0;
-}
-
-.prose-sm :where(h4 + *):not(:where([class~="not-prose"] *)) {
-  margin-top: 0;
+.prose :where(table):not(:where([class~="not-prose"] *)) {
+  width: 100%;
+  table-layout: auto;
+  text-align: left;
+  margin-top: 2em;
+  margin-bottom: 2em;
+  font-size: 0.875em;
+  line-height: 1.7142857;
 }
 
 .prose-sm :where(table):not(:where([class~="not-prose"] *)) {
+  margin-top: 1.7142857em;
+  margin-bottom: 1.7142857em;
   font-size: 0.8571429em;
   line-height: 1.5;
+}
+
+.prose :where(thead):not(:where([class~="not-prose"] *)) {
+  border-bottom-width: 1px;
+  border-bottom-color: rgb(209 213 219);
+}
+
+.prose :where(thead th):not(:where([class~="not-prose"] *)) {
+  color: rgb(17 24 39);
+  font-weight: 600;
+  vertical-align: bottom;
+  padding-right: 0.5714286em;
+  padding-bottom: 0.5714286em;
+  padding-left: 0.5714286em;
 }
 
 .prose-sm :where(thead th):not(:where([class~="not-prose"] *)) {
@@ -247,122 +354,287 @@
   padding-left: 1em;
 }
 
-.prose-sm :where(thead th:first-child):not(:where([class~="not-prose"] *)) {
-  padding-left: 0;
+.prose :where(tbody tr):not(:where([class~="not-prose"] *)) {
+  border-bottom-width: 1px;
+  border-bottom-color: rgb(229 231 235);
 }
 
-.prose-sm :where(thead th:last-child):not(:where([class~="not-prose"] *)) {
-  padding-right: 0;
+.prose :where(tbody tr:last-child):not(:where([class~="not-prose"] *)) {
+  border-bottom-width: 0;
 }
 
-.prose-sm :where(tbody td, tfoot td):not(:where([class~="not-prose"] *)) {
-  padding-top: 0.6666667em;
-  padding-right: 1em;
-  padding-bottom: 0.6666667em;
-  padding-left: 1em;
+.prose :where(tbody td):not(:where([class~="not-prose"] *)) {
+  vertical-align: baseline;
 }
 
-.prose-sm :where(tbody td:first-child, tfoot td:first-child):not(:where([class~="not-prose"] *)) {
-  padding-left: 0;
+.prose :where(tfoot):not(:where([class~="not-prose"] *)) {
+  border-top-width: 1px;
+  border-top-color: rgb(209 213 219);
 }
 
-.prose-sm :where(tbody td:last-child, tfoot td:last-child):not(:where([class~="not-prose"] *)) {
-  padding-right: 0;
+.prose :where(tfoot td):not(:where([class~="not-prose"] *)) {
+  vertical-align: top;
 }
 
-/* Dark mode for prose */
+.prose :where(ol):not(:where([class~="not-prose"] *)) {
+  list-style-type: decimal;
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+}
+
+.prose-sm :where(ol):not(:where([class~="not-prose"] *)) {
+  margin-top: 1.1428571em;
+  margin-bottom: 1.1428571em;
+  padding-left: 1.5714286em;
+}
+
+.prose :where(ul):not(:where([class~="not-prose"] *)) {
+  list-style-type: disc;
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.625em;
+}
+
+.prose-sm :where(ul):not(:where([class~="not-prose"] *)) {
+  margin-top: 1.1428571em;
+  margin-bottom: 1.1428571em;
+  padding-left: 1.5714286em;
+}
+
+.prose :where(li):not(:where([class~="not-prose"] *)) {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose-sm :where(li):not(:where([class~="not-prose"] *)) {
+  margin-top: 0.2857143em;
+  margin-bottom: 0.2857143em;
+}
+
+.prose :where(ol > li):not(:where([class~="not-prose"] *)) {
+  padding-left: 0.375em;
+}
+
+.prose-sm :where(ol > li):not(:where([class~="not-prose"] *)) {
+  padding-left: 0.4285714em;
+}
+
+.prose :where(ul > li):not(:where([class~="not-prose"] *)) {
+  padding-left: 0.375em;
+}
+
+.prose-sm :where(ul > li):not(:where([class~="not-prose"] *)) {
+  padding-left: 0.4285714em;
+}
+
+.prose :where(.prose > ul > li p):not(:where([class~="not-prose"] *)) {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.prose-sm :where(.prose-sm > ul > li p):not(:where([class~="not-prose"] *)) {
+  margin-top: 0.5714286em;
+  margin-bottom: 0.5714286em;
+}
+
+.prose :where(.prose > ul > li > *:first-child):not(:where([class~="not-prose"] *)) {
+  margin-top: 1.25em;
+}
+
+.prose-sm :where(.prose-sm > ul > li > *:first-child):not(:where([class~="not-prose"] *)) {
+  margin-top: 1.1428571em;
+}
+
+.prose :where(.prose > ul > li > *:last-child):not(:where([class~="not-prose"] *)) {
+  margin-bottom: 1.25em;
+}
+
+.prose-sm :where(.prose-sm > ul > li > *:last-child):not(:where([class~="not-prose"] *)) {
+  margin-bottom: 1.1428571em;
+}
+
+.prose :where(.prose > ol > li > *:first-child):not(:where([class~="not-prose"] *)) {
+  margin-top: 1.25em;
+}
+
+.prose-sm :where(.prose-sm > ol > li > *:first-child):not(:where([class~="not-prose"] *)) {
+  margin-top: 1.1428571em;
+}
+
+.prose :where(.prose > ol > li > *:last-child):not(:where([class~="not-prose"] *)) {
+  margin-bottom: 1.25em;
+}
+
+.prose-sm :where(.prose-sm > ol > li > *:last-child):not(:where([class~="not-prose"] *)) {
+  margin-bottom: 1.1428571em;
+}
+
+.prose :where(ul ul, ul ol, ol ul, ol ol):not(:where([class~="not-prose"] *)) {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.prose-sm :where(ul ul, ul ol, ol ul, ol ol):not(:where([class~="not-prose"] *)) {
+  margin-top: 0.5714286em;
+  margin-bottom: 0.5714286em;
+}
+
+.prose :where(hr):not(:where([class~="not-prose"] *)) {
+  border-color: rgb(229 231 235);
+  border-top-width: 1px;
+  margin-top: 3em;
+  margin-bottom: 3em;
+}
+
+.prose-sm :where(hr):not(:where([class~="not-prose"] *)) {
+  margin-top: 2.2857143em;
+  margin-bottom: 2.2857143em;
+}
+
+.prose :where(hr + *):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+}
+
+.prose-sm :where(hr + *):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+}
+
+.prose :where(h2 + *):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+}
+
+.prose-sm :where(h2 + *):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+}
+
+.prose :where(h3 + *):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+}
+
+.prose-sm :where(h3 + *):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+}
+
+.prose :where(h4 + *):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+}
+
+.prose-sm :where(h4 + *):not(:where([class~="not-prose"] *)) {
+  margin-top: 0;
+}
+
+/* Dark mode prose styles */
 .dark .prose {
-  color: #d1d5db;
+  color: rgb(209 213 219);
 }
 
-.dark .prose :where(h1, h2, h3, h4, th):not(:where([class~="not-prose"] *)) {
-  color: #f9fafb;
-}
-
-.dark .prose :where(a):not(:where([class~="not-prose"] *)) {
-  color: #60a5fa;
-}
-
-.dark .prose :where(a):hover:not(:where([class~="not-prose"] *)) {
-  color: #93c5fd;
-}
-
-.dark .prose :where(code):not(:where([class~="not-prose"] *)) {
-  color: #f9fafb;
-  background-color: #374151;
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-}
-
-.dark .prose :where(pre):not(:where([class~="not-prose"] *)) {
-  background-color: #1f2937;
-  color: #f9fafb;
+.dark .prose :where(h1, h2, h3, h4, h5, h6, th):not(:where([class~="not-prose"] *)) {
+  color: rgb(243 244 246);
 }
 
 .dark .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-  border-left-color: #4b5563;
-  color: #d1d5db;
+  color: rgb(156 163 175);
+  border-left-color: rgb(75 85 99);
 }
 
-.dark .prose :where(hr):not(:where([class~="not-prose"] *)) {
-  border-color: #374151;
+.dark .prose :where(code):not(:where([class~="not-prose"] *)) {
+  color: rgb(243 244 246);
+  background-color: rgb(55 65 81);
+}
+
+.dark .prose :where(pre):not(:where([class~="not-prose"] *)) {
+  color: rgb(229 231 235);
+  background-color: rgb(17 24 39);
+}
+
+.dark .prose :where(pre code):not(:where([class~="not-prose"] *)) {
+  background-color: transparent;
 }
 
 .dark .prose :where(table):not(:where([class~="not-prose"] *)) {
-  border-color: #374151;
+  color: rgb(209 213 219);
 }
 
-.dark .prose :where(th, td):not(:where([class~="not-prose"] *)) {
-  border-color: #374151;
+.dark .prose :where(thead):not(:where([class~="not-prose"] *)) {
+  color: rgb(243 244 246);
+  border-bottom-color: rgb(75 85 99);
 }
 
-.dark .prose :where(th):not(:where([class~="not-prose"] *)) {
-  background-color: #1f2937;
+.dark .prose :where(tbody tr):not(:where([class~="not-prose"] *)) {
+  border-bottom-color: rgb(55 65 81);
 }
 
-/* 添加 prose-invert 类支持 */
+.dark .prose :where(tfoot):not(:where([class~="not-prose"] *)) {
+  border-top-color: rgb(75 85 99);
+}
+
+.dark .prose :where(hr):not(:where([class~="not-prose"] *)) {
+  border-color: rgb(55 65 81);
+}
+
+.dark .prose :where(lead):not(:where([class~="not-prose"] *)) {
+  color: rgb(156 163 175);
+}
+
 .prose-invert {
-  --tw-prose-body: #d1d5db;
-  --tw-prose-headings: #f9fafb;
-  --tw-prose-lead: #9ca3af;
-  --tw-prose-links: #60a5fa;
-  --tw-prose-bold: #f9fafb;
-  --tw-prose-counters: #9ca3af;
-  --tw-prose-bullets: #4b5563;
-  --tw-prose-hr: #374151;
-  --tw-prose-quotes: #d1d5db;
-  --tw-prose-quote-borders: #4b5563;
-  --tw-prose-captions: #9ca3af;
-  --tw-prose-code: #f9fafb;
-  --tw-prose-pre-code: #f9fafb;
-  --tw-prose-pre-bg: #1f2937;
-  --tw-prose-th-borders: #374151;
-  --tw-prose-td-borders: #374151;
+  --tw-prose-body: rgb(209 213 219);
+  --tw-prose-headings: rgb(243 244 246);
+  --tw-prose-lead: rgb(156 163 175);
+  --tw-prose-links: rgb(96 165 250);
+  --tw-prose-bold: rgb(243 244 246);
+  --tw-prose-counters: rgb(156 163 175);
+  --tw-prose-bullets: rgb(107 114 128);
+  --tw-prose-hr: rgb(55 65 81);
+  --tw-prose-quotes: rgb(243 244 246);
+  --tw-prose-quote-borders: rgb(55 65 81);
+  --tw-prose-captions: rgb(156 163 175);
+  --tw-prose-code: rgb(243 244 246);
+  --tw-prose-pre-code: rgb(229 231 235);
+  --tw-prose-pre-bg: rgb(17 24 39);
+  --tw-prose-th-borders: rgb(55 65 81);
+  --tw-prose-td-borders: rgb(55 65 81);
+  --tw-prose-invert-body: rgb(209 213 219);
+  --tw-prose-invert-headings: rgb(243 244 246);
+  --tw-prose-invert-lead: rgb(156 163 175);
+  --tw-prose-invert-links: rgb(96 165 250);
+  --tw-prose-invert-bold: rgb(243 244 246);
+  --tw-prose-invert-counters: rgb(156 163 175);
+  --tw-prose-invert-bullets: rgb(107 114 128);
+  --tw-prose-invert-hr: rgb(55 65 81);
+  --tw-prose-invert-quotes: rgb(243 244 246);
+  --tw-prose-invert-quote-borders: rgb(55 65 81);
+  --tw-prose-invert-captions: rgb(156 163 175);
+  --tw-prose-invert-code: rgb(243 244 246);
+  --tw-prose-invert-pre-code: rgb(229 231 235);
+  --tw-prose-invert-pre-bg: rgb(17 24 39);
+  --tw-prose-invert-th-borders: rgb(55 65 81);
+  --tw-prose-invert-td-borders: rgb(55 65 81);
 }
 
-/* 保持原有的 markdown-content 样式以向后兼容 */
+/* Legacy markdown content styles */
 .markdown-content {
-  @apply max-w-none text-foreground;
+  @apply prose prose-sm dark:prose-invert max-w-none;
 }
 
 .markdown-content h1 {
-  @apply text-2xl font-bold mb-4;
+  @apply text-xl font-bold mb-3;
 }
 
 .markdown-content h2 {
-  @apply text-xl font-semibold mb-3;
+  @apply text-lg font-semibold mb-2;
 }
 
 .markdown-content h3 {
-  @apply text-lg font-medium mb-2;
+  @apply text-base font-medium mb-2;
 }
 
 .markdown-content p {
-  @apply mb-4 leading-relaxed;
+  @apply mb-3 leading-relaxed;
 }
 
 .markdown-content ul, .markdown-content ol {
-  @apply mb-4 pl-6;
+  @apply mb-3 pl-5;
 }
 
 .markdown-content li {
@@ -374,25 +646,25 @@
 }
 
 .markdown-content pre {
-  @apply bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto mb-4;
+  @apply bg-gray-900 text-gray-100 p-3 rounded-lg overflow-x-auto text-sm;
 }
 
 .markdown-content blockquote {
-  @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic mb-4;
+  @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic my-3;
 }
 
 .markdown-content a {
-  @apply text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline;
+  @apply text-blue-600 dark:text-blue-400 hover:underline;
 }
 
 .markdown-content table {
-  @apply w-full border-collapse border border-gray-300 dark:border-gray-600 mb-4;
+  @apply w-full border-collapse border border-gray-300 dark:border-gray-600 my-3;
 }
 
 .markdown-content th, .markdown-content td {
-  @apply border border-gray-300 dark:border-gray-600 px-4 py-2 text-left;
+  @apply border border-gray-300 dark:border-gray-600 px-3 py-2 text-left;
 }
 
 .markdown-content th {
-  @apply bg-gray-50 dark:bg-gray-700 font-semibold;
+  @apply bg-gray-100 dark:bg-gray-800 font-semibold;
 } 

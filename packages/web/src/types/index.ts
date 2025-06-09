@@ -127,6 +127,12 @@ export interface Settings {
   site_description: string;
   allow_registration: string;
   default_visibility: string;
+  disable_password_login?: string;
+  disable_username_mod?: string;
+  disable_nickname_mod?: string;
+  week_start_day?: string;
+  custom_css?: string;
+  custom_js?: string;
 }
 
 // 前端特有类型

@@ -10,6 +10,8 @@ import HomePage from '@/pages/HomePage'
 import MemoDetailPage from '@/pages/MemoDetailPage'
 import SettingsPage from '@/pages/SettingsPage'
 import UserProfilePage from '@/pages/UserProfilePage'
+import CalendarPage from '@/pages/CalendarPage'
+import TagsPage from '@/pages/TagsPage'
 
 // 保护路由组件
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -89,6 +91,30 @@ function App() {
           <ProtectedRoute>
             <Layout>
               <MemoDetailPage />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/calendar" element={
+          <ProtectedRoute>
+            <Layout>
+              <CalendarPage />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/tags" element={
+          <ProtectedRoute>
+            <Layout>
+              <TagsPage />
+            </Layout>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/tags/:tagName" element={
+          <ProtectedRoute>
+            <Layout>
+              <TagsPage />
             </Layout>
           </ProtectedRoute>
         } />
