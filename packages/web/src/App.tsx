@@ -98,70 +98,32 @@ function App() {
   }, [theme])
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Routes>
         {/* 公开路由 */}
         <Route path="/login" element={<LoginPage />} />
         
-        {/* 保护路由 */}
+        {/* 保护路由组 - 使用Layout作为父路由 */}
         <Route path="/" element={
           <ProtectedRoute>
-            <Layout>
-              <HomePage />
-            </Layout>
+            <Layout />
           </ProtectedRoute>
-        } />
-        
-        <Route path="/memo/:id" element={
-          <ProtectedRoute>
-            <Layout>
-              <MemoDetailPage />
-            </Layout>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/calendar" element={
-          <ProtectedRoute>
-            <Layout>
-              <CalendarPage />
-            </Layout>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/tags" element={
-          <ProtectedRoute>
-            <Layout>
-              <TagsPage />
-            </Layout>
-          </ProtectedRoute>
-        } />
-
-        <Route path="/tags/:tagName" element={
-          <ProtectedRoute>
-            <Layout>
-              <TagsPage />
-            </Layout>
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/profile" element={
-          <ProtectedRoute>
-            <Layout>
-              <UserProfilePage />
-            </Layout>
-          </ProtectedRoute>
-        } />
-        
-        {/* 管理员路由 */}
-        <Route path="/settings" element={
-          <ProtectedRoute>
+        }>
+          {/* 嵌套路由 */}
+          <Route index element={<HomePage />} />
+          <Route path="memo/:id" element={<MemoDetailPage />} />
+          <Route path="calendar" element={<CalendarPage />} />
+          <Route path="tags" element={<TagsPage />} />
+          <Route path="tags/:tagName" element={<TagsPage />} />
+          <Route path="profile" element={<UserProfilePage />} />
+          
+          {/* 管理员路由 */}
+          <Route path="settings" element={
             <AdminRoute>
-              <Layout>
-                <SettingsPage />
-              </Layout>
+              <SettingsPage />
             </AdminRoute>
-          </ProtectedRoute>
-        } />
+          } />
+        </Route>
         
         {/* 默认重定向 */}
         <Route path="*" element={<Navigate to="/" replace />} />

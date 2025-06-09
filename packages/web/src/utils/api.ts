@@ -98,16 +98,9 @@ export const authApi = {
 // Memo相关API
 export const memoApi = {
   // 获取memo列表
-  getMemos: async (params?: MemosQueryParams): Promise<PaginatedResponse<Memo> | Memo[]> => {
-    const response = await api.get<ApiResponse<PaginatedResponse<Memo> | { data: Memo[] }>>('/api/v1/memos', { params });
-    const result = handleApiResponse(response);
-    
-    // 兼容两种返回格式
-    if ('pagination' in result) {
-      return result as PaginatedResponse<Memo>;
-    } else {
-      return (result as { data: Memo[] }).data;
-    }
+  getMemos: async (params?: MemosQueryParams): Promise<Memo[]> => {
+    const response = await api.get<ApiResponse<Memo[]>>('/api/v1/memos', { params });
+    return handleApiResponse(response);
   },
 
   // 获取单个memo
