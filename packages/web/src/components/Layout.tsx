@@ -4,14 +4,13 @@ import {
   HomeIcon, 
   SettingsIcon, 
   TagIcon,
-  CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
   SearchIcon
 } from 'lucide-react'
 import { useAppStore, useTagStore, useMemoStore } from '@/store'
-import { tagApi, memoApi } from '@/utils/api'
+import { tagApi } from '@/utils/api'
 
 const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']

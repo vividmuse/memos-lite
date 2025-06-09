@@ -8,9 +8,7 @@ import {
   CopyIcon,
   EditIcon,
   MoreHorizontalIcon,
-  HashIcon,
-  ClockIcon,
-  UserIcon
+  HashIcon
 } from 'lucide-react'
 import MarkdownPreview from './MarkdownPreview'
 

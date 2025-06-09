@@ -7,7 +7,6 @@ import type {
   CreateMemoRequest,
   UpdateMemoRequest,
   MemosQueryParams,
-  PaginatedResponse,
   Tag,
   Comment,
   CreateCommentRequest,
