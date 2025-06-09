@@ -1,0 +1,23 @@
+{
+  "name": "memos-lite",
+  "version": "1.0.0",
+  "description": "轻量级备忘录系统 - Cloudflare Workers + React",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel dev",
+    "build": "pnpm --parallel build",
+    "deploy": "pnpm --filter=api deploy",
+    "db:init": "pnpm --filter=api db:init"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  }
+} 

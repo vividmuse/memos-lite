@@ -1,0 +1,18 @@
+name = "memos-lite-api"
+main = "src/index.ts"
+compatibility_date = "2023-12-01"
+
+[env.production]
+name = "memos-lite-api"
+
+[env.development]
+name = "memos-lite-api-dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "memos-lite-db"
+database_id = "9e215a44-48b7-49b3-b646-8992c7bca024"
+
+[vars]
+JWT_SECRET = "your-jwt-secret-key"
+CORS_ORIGIN = "*" 

@@ -1,0 +1,26 @@
+{
+  "name": "@memos-lite/api",
+  "version": "1.0.0",
+  "description": "Memos Lite API - Cloudflare Worker",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run",
+    "db:init": "wrangler d1 execute memos-lite-db --file=./schema.sql",
+    "db:migrate": "wrangler d1 migrations apply memos-lite-db",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "hono": "^3.12.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231121.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.5",
+    "wrangler": "^3.19.0",
+    "typescript": "^5.0.0"
+  }
+} 

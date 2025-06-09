@@ -1,0 +1,254 @@
+# PRD – **Memos Lite**
+*Cloudflare Workers + React Router + D1*
+
+---
+
+## 1 · 背景与目标
+
+| 项目 | 说明 |
+|------|------|
+| 参考项目 | <https://github.com/usememos/memos> |
+| 目标 | 在 Cloudflare Pages 上部署一款轻量级、自托管的笔记 / 备忘录系统，保留核心 Markdown + 标签 + 评论体验，并兼容 iOS 客户端 **MoeMemos**。后端 API 采用 Cloudflare Workers，数据存储在 D1。 |
+
+> **D1 实例**：`memos-lite-db` (ID `9e215a44-48b7-49b3-b646-8992c7bca024`)
+
+---
+
+## 2 · 系统架构
+
+```mermaid
+graph TD
+  A[React SPA <BrowserRouter>] --Fetch--> B[/Cloudflare Worker API/]
+  B --SQL--> C[(Cloudflare D1)]
+  B --R2 (可选)--> D[[Cloudflare R2]]
+  A --Static Assets--> E[[Cloudflare Pages]]
+```
+
+* **前端**：React 18 + React Router 6  
+* **后端**：单 Worker 脚本（TypeScript / JavaScript）  
+* **数据**：Cloudflare D1（SQLite）  
+* **对象存储** (可选)：Cloudflare R2 – 附件上传  
+
+---
+
+## 3 · 用户角色
+
+| 角色 | 权限 |
+|------|------|
+| 访客 | 只读公开 Memo |
+| 登录用户 | 增删改自己 Memo、上传附件、评论、查看统计 |
+| 管理员（可选） | 站点设置、用户管理、删除任何内容 |
+
+**身份验证**
+
+* 登录返回 JWT 或随机 Bearer Token  
+* Worker 在 `Authorization: Bearer` 中校验  
+* Token 可存 KV 或 `users` 表
+
+---
+
+## 4 · 功能需求
+
+### 4.1 后端 API
+
+#### 通用
+
+| 路径 | 方法 | 描述 |
+|------|------|------|
+| `/api/v1/auth/login` | POST | 登录，返回 token |
+| `/api/v1/auth/me` | GET | 获取当前用户资料 |
+
+#### Memo CRUD
+
+| 路径 | 方法 | 描述 |
+|------|------|------|
+| `/api/v1/memos` | GET | 列表：分页 / 搜索 / 标签 / Pin |
+| `/api/v1/memos` | POST | 新建 Memo |
+| `/api/v1/memos/:id` | GET | 获取 Memo |
+| `/api/v1/memos/:id` | PUT | 更新 Memo |
+| `/api/v1/memos/:id` | DELETE | 删除 Memo |
+
+兼容 **MoeMemos** 旧版：
+
+| 旧路径 | 新路径 |
+|--------|--------|
+| `/api/memo` | `/api/v1/memos` |
+| `/api/memo/all` | `/api/v1/memos?visibility=PUBLIC` |
+
+#### 统计 & 图表
+
+| 路径 | 方法 | 描述 |
+|------|------|------|
+| `/api/memo/stats?creatorId={id}` | GET | 热力图：返回每日 Memo 数量 |
+| `/api/v1/users/{id}/stats` | GET | 用户汇总：`totalMemos`, `totalTags`, `totalComments`, `firstMemoAt`, `lastMemoAt` |
+
+#### 评论
+
+| 路径 | 方法 | 描述 |
+|------|------|------|
+| `/api/v1/memos/:id/comments` | GET | 获取评论树 |
+| `/api/v1/memos/:id/comments` | POST | 新评论 |
+| `/api/v1/comments/:cid` | DELETE | 删除评论 |
+
+#### 标签
+
+| 路径 | 方法 | 描述 |
+|------|------|------|
+| `/api/v1/tags` | GET | 标签列表 |
+| `/api/v1/tags` | POST | 新建标签 |
+| `/api/v1/tags/:id` | DELETE | 删除标签 |
+
+#### 附件 (可选)
+
+| 路径 | 方法 | 描述 |
+|------|------|------|
+| `/api/v1/resources` | POST | 上传附件，返回 URL |
+
+#### 用户设置
+
+| 路径 | 方法 | 描述 |
+|------|------|------|
+| `/api/v1/users/{id}/setting` | GET | 获取用户偏好（主题、语言等） |
+| `/api/v1/users/{id}/setting` | PATCH | 更新偏好 |
+
+#### 全局设置
+
+| 路径 | 方法 | 描述 |
+|------|------|------|
+| `/api/v1/settings` | GET | 读取站点设置 |
+| `/api/v1/settings` | PUT | 更新站点设置 |
+
+### 4.2 前端功能（网页 + iOS APP）
+
+#### Markdown & 扩展
+
+* 标准 Markdown（标题、列表、表格、任务清单…）  
+* 代码块 ```lang``` + 语法高亮  
+* Mermaid 流程 / 时序图  
+* LaTeX / KaTeX 数学公式  
+* Spoiler、文字高亮、行内代码  
+* **代码注释气泡**：解析 `//` 或 `#` 行注释，显示工具提示
+
+#### 编辑器 UX
+
+* 实时预览（分栏 / 上下）  
+* 快捷键：`⌘S` 保存、`⌘B` 加粗、`⌘K` 链接  
+* Tab 缩进、自动补全  
+* 光滑滚动同步
+
+#### 评论系统
+
+* 多级嵌套、折叠 / 展开  
+* Markdown 渲染  
+* 评论计数、锚点定位  
+* 管理员可删除或关闭评论
+
+#### 标签 & 搜索
+
+* `/tags/:tag` 页面  
+* 多标签过滤、全文搜索
+
+#### 性能优化
+
+* `React.memo` / `react-window` 虚拟滚动  
+* IntersectionObserver 延迟加载图片  
+* PWA 支持（可选）
+
+#### 设置页
+
+* 站点标题 / 描述 / Logo  
+* 默认可见性  
+* Markdown 插件开关  
+* 导入 / 导出（JSON）
+
+---
+
+## 5 · 数据库模型（D1）
+
+```sql
+-- 用户
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE,
+  password_hash TEXT,
+  role TEXT DEFAULT 'USER'
+);
+
+-- 用户设置
+CREATE TABLE user_settings (
+  user_id INTEGER PRIMARY KEY,
+  json TEXT -- 序列化偏好
+);
+
+-- Memo
+CREATE TABLE memos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER,
+  content TEXT NOT NULL,
+  visibility TEXT CHECK (visibility IN ('PUBLIC','PRIVATE')) DEFAULT 'PRIVATE',
+  pinned INTEGER DEFAULT 0,
+  created_at INTEGER,
+  updated_at INTEGER
+);
+
+-- 标签
+CREATE TABLE tags (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT UNIQUE
+);
+
+-- Memo × 标签
+CREATE TABLE memo_tags (
+  memo_id INTEGER,
+  tag_id INTEGER,
+  PRIMARY KEY (memo_id, tag_id)
+);
+
+-- 评论
+CREATE TABLE comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  memo_id INTEGER,
+  user_id INTEGER,
+  parent_id INTEGER,
+  content TEXT,
+  created_at INTEGER
+);
+```
+
+---
+
+## 6 · 非功能需求
+
+* 安全：JWT、参数化 SQL、HTTP 安全头  
+* 性能：首屏 < 1 s，P75 交互 < 100 ms  
+* 可访问性：WCAG AA  
+* 可维护性：monorepo（PNPM workspace）
+
+---
+
+## 7 · 开发里程碑
+
+| 阶段 | 目标 | 周期 |
+|------|------|------|
+| MVP | 登录、Memo CRUD、Markdown 预览 | 1 周 |
+| 扩展 | 标签、评论、附件、统计接口 | 2 周 |
+| 优化 | 代码注释、性能、PWA | 1 周 |
+| 发布 | Beta & 用户反馈 | — |
+
+---
+
+## 8 · 部署流程
+
+1. GitHub Push → Pages CI 构建静态资源  
+2. `wrangler deploy` 发布 Worker，并绑定 `memos-lite-db`  
+3. 设置环境变量：`JWT_SECRET`, `R2_BUCKET` (可选)  
+4. 首次部署执行 `/schema.sql` 初始化表
+
+---
+
+## 9 · 未来方向
+
+* 多用户协作 / 分享链接  
+* WebSocket 实时协作  
+* AI 摘要 / 问答  
+* 数据迁移至 PostgreSQL / Turso
