@@ -40,14 +40,30 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const { setSettings, setTheme, theme } = useAppStore()
+  const { setSettings, theme } = useAppStore()
   const { checkAuth } = useAuthStore()
 
   useEffect(() => {
     // 初始化认证状态
     checkAuth()
     
-    // 应用主题
+    // 从 localStorage 获取主题并应用
+    const savedTheme = localStorage.getItem('app-storage')
+    if (savedTheme) {
+      try {
+        const parsedStorage = JSON.parse(savedTheme)
+        const currentTheme = parsedStorage?.state?.theme || 'light'
+        if (currentTheme === 'dark') {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+      } catch (error) {
+        console.error('Failed to parse theme from localStorage:', error)
+      }
+    }
+    
+    // 应用当前主题
     if (theme === 'dark') {
       document.documentElement.classList.add('dark')
     } else {
@@ -70,7 +86,16 @@ function App() {
     }
     
     loadSettings()
-  }, [checkAuth, setSettings, setTheme, theme])
+  }, [checkAuth, setSettings])
+
+  // 单独监听主题变化
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [theme])
 
   return (
     <div className="min-h-screen bg-background">

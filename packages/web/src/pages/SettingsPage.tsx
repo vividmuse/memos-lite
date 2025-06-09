@@ -24,6 +24,7 @@ interface ApiToken {
   name: string
   token: string
   created_at: number
+  expires_at?: number
   last_used?: number
 }
 
@@ -52,6 +53,7 @@ export default function SettingsPage() {
   const [tokens, setTokens] = useState<ApiToken[]>([])
   const [showTokenForm, setShowTokenForm] = useState(false)
   const [newTokenName, setNewTokenName] = useState('')
+  const [newTokenExpiry, setNewTokenExpiry] = useState('never')
   const [newToken, setNewToken] = useState<string | null>(null)
   const [visibleTokens, setVisibleTokens] = useState<Set<number>>(new Set())
   
@@ -183,18 +185,28 @@ export default function SettingsPage() {
     }
 
     try {
+      // 计算过期时间
+      let expiresAt: number | undefined
+      if (newTokenExpiry !== 'never') {
+        const now = Date.now() / 1000
+        const days = parseInt(newTokenExpiry)
+        expiresAt = now + (days * 24 * 60 * 60)
+      }
+
       // 这里需要添加创建API令牌的接口
       const token = 'memo_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
       const newTokenData = {
         id: Date.now(),
         name: newTokenName,
         token: token,
-        created_at: Date.now() / 1000
+        created_at: Date.now() / 1000,
+        expires_at: expiresAt
       }
       
       setTokens(prev => [newTokenData, ...prev])
       setNewToken(token)
       setNewTokenName('')
+      setNewTokenExpiry('never')
       setShowTokenForm(false)
       showMessage('success', 'API令牌创建成功')
     } catch (error) {
@@ -287,6 +299,22 @@ export default function SettingsPage() {
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleString('zh-CN')
+  }
+
+  const isTokenExpired = (token: ApiToken) => {
+    if (!token.expires_at) return false
+    return Date.now() / 1000 > token.expires_at
+  }
+
+  const getExpiryLabel = (expiryValue: string) => {
+    switch (expiryValue) {
+      case 'never': return '永不过期'
+      case '7': return '7天后过期'
+      case '30': return '30天后过期'
+      case '90': return '90天后过期'
+      case '365': return '1年后过期'
+      default: return '自定义'
+    }
   }
 
   const weekDayOptions = [
@@ -662,26 +690,44 @@ export default function SettingsPage() {
           {/* 新令牌创建表单 */}
           {showTokenForm && (
             <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div className="flex items-center gap-3">
-                <input
-                  type="text"
-                  value={newTokenName}
-                  onChange={(e) => setNewTokenName(e.target.value)}
-                  placeholder="令牌名称"
-                  className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={createToken}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-                >
-                  创建
-                </button>
-                <button
-                  onClick={() => setShowTokenForm(false)}
-                  className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
-                >
-                  取消
-                </button>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    value={newTokenName}
+                    onChange={(e) => setNewTokenName(e.target.value)}
+                    placeholder="令牌名称"
+                    className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <select
+                    value={newTokenExpiry}
+                    onChange={(e) => setNewTokenExpiry(e.target.value)}
+                    className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="never">永不过期</option>
+                    <option value="7">7天后过期</option>
+                    <option value="30">30天后过期</option>
+                    <option value="90">90天后过期</option>
+                    <option value="365">1年后过期</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={createToken}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    创建
+                  </button>
+                  <button
+                    onClick={() => setShowTokenForm(false)}
+                    className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
+                  >
+                    取消
+                  </button>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {getExpiryLabel(newTokenExpiry)}
+                  </span>
+                </div>
               </div>
             </div>
           )}
@@ -729,10 +775,16 @@ export default function SettingsPage() {
                     <div className="font-medium text-gray-900 dark:text-white">
                       {token.name}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      创建于 {formatDate(token.created_at)}
-                      {token.last_used && ` • 最后使用 ${formatDate(token.last_used)}`}
-                    </div>
+                                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                    创建于 {formatDate(token.created_at)}
+                    {token.last_used && ` • 最后使用 ${formatDate(token.last_used)}`}
+                    {token.expires_at && (
+                      <span className={`ml-2 ${isTokenExpired(token) ? 'text-red-600 dark:text-red-400' : ''}`}>
+                        • {isTokenExpired(token) ? '已过期' : `过期时间 ${formatDate(token.expires_at)}`}
+                      </span>
+                    )}
+                    {!token.expires_at && <span className="ml-2 text-green-600 dark:text-green-400">• 永不过期</span>}
+                  </div>
                     <div className="flex items-center gap-2 mt-2">
                       <code className="text-sm bg-white dark:bg-gray-800 px-2 py-1 rounded border">
                         {visibleTokens.has(token.id) 
