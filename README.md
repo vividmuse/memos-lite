@@ -101,15 +101,14 @@ memos-lite/
 
 确保已安装：
 - Node.js 18+
-- pnpm 8+
+- npm 或 pnpm
 - Cloudflare CLI (wrangler)
 
 ### 2. 克隆和安装
 
 ```bash
-git clone https://github.com/vividmuse/memos-lite.git
+git clone https://github.com/your-username/memos-lite.git
 cd memos-lite
-pnpm install
 ```
 
 ### 3. 后端部署
@@ -118,29 +117,53 @@ pnpm install
 # 进入 API 目录
 cd packages/api
 
+# 安装依赖
+npm install
+
 # 配置 wrangler.toml 中的数据库 ID 和环境变量
 
 # 初始化数据库
-pnpm db:init
+npm run db:init
 
 # 部署到 Cloudflare Workers
-pnpm deploy
+npm run deploy
 ```
 
-### 4. 前端部署
+### 4. 前端开发
 
 ```bash
 # 进入前端目录
 cd packages/web
 
+# 安装依赖
+npm install
+
 # 配置 API 地址
-# 编辑 .env 文件，设置 VITE_API_URL
+# 创建 .env 文件，设置 VITE_API_URL=https://your-api-domain.workers.dev
+
+# 开发模式
+npm run dev
 
 # 构建前端
-pnpm build
-
-# 部署到 Cloudflare Pages 或其他静态托管服务
+npm run build
 ```
+
+### 5. 自动化部署到 GitHub Pages
+
+项目提供了自动化部署脚本：
+
+```bash
+# 回到项目根目录
+cd ../..
+
+# 运行部署脚本（会自动构建并部署到 GitHub Pages）
+./deploy.sh
+```
+
+**注意**：
+- 确保 GitHub 仓库已开启 GitHub Pages 功能
+- 确保在 main 分支且工作目录干净（无未提交更改）
+- 首次部署后需要在 GitHub 仓库设置中配置 Pages 源为 `gh-pages` 分支
 
 ## 配置说明
 

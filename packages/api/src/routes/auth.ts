@@ -149,4 +149,346 @@ auth.post('/refresh', authMiddleware, async (c) => {
   }
 });
 
+// 数据库初始化接口（仅在开发时使用）
+auth.post('/init-db', async (c) => {
+  try {
+    // 检查是否已经初始化过（通过检查users表是否存在管理员用户）
+    const checkAdminStmt = c.env.DB.prepare('SELECT COUNT(*) as count FROM users WHERE username = ?');
+    const adminExists = await checkAdminStmt.bind('admin').first<{ count: number }>();
+    
+    if (adminExists && adminExists.count > 0) {
+      return error('Database already initialized', 400);
+    }
+
+    // 创建用户表（如果不存在）
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT DEFAULT 'USER' CHECK (role IN ('USER', 'ADMIN')),
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 创建用户设置表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS user_settings (
+        user_id INTEGER PRIMARY KEY,
+        theme TEXT DEFAULT 'light',
+        language TEXT DEFAULT 'zh-CN',
+        markdown_plugins TEXT DEFAULT '{}',
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建Memo表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS memos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        visibility TEXT CHECK (visibility IN ('PUBLIC','PRIVATE')) DEFAULT 'PRIVATE',
+        pinned INTEGER DEFAULT 0,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        updated_at INTEGER DEFAULT (strftime('%s', 'now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建标签表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 创建Memo与标签关联表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS memo_tags (
+        memo_id INTEGER NOT NULL,
+        tag_id INTEGER NOT NULL,
+        PRIMARY KEY (memo_id, tag_id),
+        FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建评论表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        memo_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        parent_id INTEGER,
+        content TEXT NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建全局设置表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 插入默认管理员用户 (admin/admin123)
+    const passwordHash = await hashPassword('admin123');
+    await c.env.DB.prepare(
+      'INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)'
+    ).bind('admin', passwordHash, 'ADMIN').run();
+
+    // 插入默认设置
+    const settingsInsert = c.env.DB.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
+    await settingsInsert.bind('site_title', 'Memos Lite').run();
+    await settingsInsert.bind('site_description', '轻量级备忘录系统').run();
+    await settingsInsert.bind('allow_registration', 'false').run();
+    await settingsInsert.bind('default_visibility', 'PRIVATE').run();
+
+    return c.json(success(null, 'Database initialized successfully'));
+  } catch (err) {
+    console.error('Database initialization error:', err);
+    return error('Database initialization failed', 500);
+  }
+});
+
+// 调试接口 - 查看数据库中的用户（仅在开发时使用）
+auth.get('/debug-users', async (c) => {
+  try {
+    const usersStmt = c.env.DB.prepare('SELECT id, username, role, created_at FROM users');
+    const users = await usersStmt.all();
+    
+    return c.json(success(users.results, 'Users list'));
+  } catch (err) {
+    console.error('Debug users error:', err);
+    return error('Failed to get users', 500);
+  }
+});
+
+// 强制重新初始化数据库
+auth.post('/force-init-db', async (c) => {
+  try {
+    // 创建用户表（如果不存在）
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT DEFAULT 'USER' CHECK (role IN ('USER', 'ADMIN')),
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 创建用户设置表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS user_settings (
+        user_id INTEGER PRIMARY KEY,
+        theme TEXT DEFAULT 'light',
+        language TEXT DEFAULT 'zh-CN',
+        markdown_plugins TEXT DEFAULT '{}',
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建Memo表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS memos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        visibility TEXT CHECK (visibility IN ('PUBLIC','PRIVATE')) DEFAULT 'PRIVATE',
+        pinned INTEGER DEFAULT 0,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        updated_at INTEGER DEFAULT (strftime('%s', 'now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建标签表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 创建Memo与标签关联表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS memo_tags (
+        memo_id INTEGER NOT NULL,
+        tag_id INTEGER NOT NULL,
+        PRIMARY KEY (memo_id, tag_id),
+        FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建评论表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        memo_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        parent_id INTEGER,
+        content TEXT NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建全局设置表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 插入默认管理员用户 (admin/admin123)
+    const passwordHash = await hashPassword('admin123');
+    await c.env.DB.prepare(
+      'INSERT OR REPLACE INTO users (id, username, password_hash, role) VALUES (1, ?, ?, ?)'
+    ).bind('admin', passwordHash, 'ADMIN').run();
+
+    // 插入默认设置
+    const settingsInsert = c.env.DB.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
+    await settingsInsert.bind('site_title', 'Memos Lite').run();
+    await settingsInsert.bind('site_description', '轻量级备忘录系统').run();
+    await settingsInsert.bind('allow_registration', 'false').run();
+    await settingsInsert.bind('default_visibility', 'PRIVATE').run();
+
+    return c.json(success(null, 'Database force initialized successfully'));
+  } catch (err) {
+    console.error('Database force initialization error:', err);
+    return error('Database force initialization failed: ' + String(err), 500);
+  }
+});
+
+// 完全重置数据库
+auth.post('/reset-db', async (c) => {
+  try {
+    // 删除所有表（如果存在）
+    await c.env.DB.prepare('DROP TABLE IF EXISTS memo_tags').run();
+    await c.env.DB.prepare('DROP TABLE IF EXISTS comments').run();
+    await c.env.DB.prepare('DROP TABLE IF EXISTS memos').run();
+    await c.env.DB.prepare('DROP TABLE IF EXISTS tags').run();
+    await c.env.DB.prepare('DROP TABLE IF EXISTS user_settings').run();
+    await c.env.DB.prepare('DROP TABLE IF EXISTS users').run();
+    await c.env.DB.prepare('DROP TABLE IF EXISTS settings').run();
+
+    // 重新创建用户表
+    await c.env.DB.prepare(`
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT DEFAULT 'USER' CHECK (role IN ('USER', 'ADMIN')),
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 创建用户设置表
+    await c.env.DB.prepare(`
+      CREATE TABLE user_settings (
+        user_id INTEGER PRIMARY KEY,
+        theme TEXT DEFAULT 'light',
+        language TEXT DEFAULT 'zh-CN',
+        markdown_plugins TEXT DEFAULT '{}',
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建Memo表
+    await c.env.DB.prepare(`
+      CREATE TABLE memos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        visibility TEXT CHECK (visibility IN ('PUBLIC','PRIVATE')) DEFAULT 'PRIVATE',
+        pinned INTEGER DEFAULT 0,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        updated_at INTEGER DEFAULT (strftime('%s', 'now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建标签表
+    await c.env.DB.prepare(`
+      CREATE TABLE tags (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 创建Memo与标签关联表
+    await c.env.DB.prepare(`
+      CREATE TABLE memo_tags (
+        memo_id INTEGER NOT NULL,
+        tag_id INTEGER NOT NULL,
+        PRIMARY KEY (memo_id, tag_id),
+        FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE,
+        FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建评论表
+    await c.env.DB.prepare(`
+      CREATE TABLE comments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        memo_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        parent_id INTEGER,
+        content TEXT NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        FOREIGN KEY (memo_id) REFERENCES memos(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
+      )
+    `).run();
+
+    // 创建全局设置表
+    await c.env.DB.prepare(`
+      CREATE TABLE settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 插入默认管理员用户 (admin/admin123)
+    const passwordHash = await hashPassword('admin123');
+    await c.env.DB.prepare(
+      'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)'
+    ).bind('admin', passwordHash, 'ADMIN').run();
+
+    // 插入默认设置
+    const settingsInsert = c.env.DB.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
+    await settingsInsert.bind('site_title', 'Memos Lite').run();
+    await settingsInsert.bind('site_description', '轻量级备忘录系统').run();
+    await settingsInsert.bind('allow_registration', 'false').run();
+    await settingsInsert.bind('default_visibility', 'PRIVATE').run();
+
+    return c.json(success(null, 'Database reset successfully'));
+  } catch (err) {
+    console.error('Database reset error:', err);
+    return error('Database reset failed: ' + String(err), 500);
+  }
+});
+
 export default auth; 

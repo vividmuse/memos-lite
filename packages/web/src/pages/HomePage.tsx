@@ -1,15 +1,19 @@
-import { useState, useEffect } from 'react'
-import { SearchIcon, TagIcon } from 'lucide-react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { SearchIcon, TagIcon, CalendarIcon, LayoutIcon, GridIcon } from 'lucide-react'
 import { memoApi, tagApi } from '@/utils/api'
 import { useMemoStore, useTagStore } from '@/store'
+import { Memo, Tag } from '@/types'
 import MemoCard from '@/components/MemoCard'
 import MemoEditor from '@/components/MemoEditor'
+import CalendarView from '@/components/CalendarView'
+import StatsPanel from '@/components/StatsPanel'
 
 export default function HomePage() {
   const [showEditor, setShowEditor] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedVisibility, setSelectedVisibility] = useState<'ALL' | 'PUBLIC' | 'PRIVATE'>('ALL')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'stats'>('list')
 
   const { 
     memos, 
@@ -25,16 +29,12 @@ export default function HomePage() {
     setLoading: setTagsLoading 
   } = useTagStore()
 
-  useEffect(() => {
-    loadMemos()
-    loadTags()
-  }, [selectedVisibility, selectedTag, searchTerm])
-
-  const loadMemos = async () => {
+  // 使用 useCallback 避免无限循环
+  const loadMemos = useCallback(async () => {
     setMemosLoading(true)
     try {
       const params = {
-        visibility: selectedVisibility,
+        visibility: selectedVisibility === 'ALL' ? undefined : selectedVisibility,
         tag: selectedTag || undefined,
         search: searchTerm || undefined,
         limit: 50
@@ -48,9 +48,9 @@ export default function HomePage() {
     } finally {
       setMemosLoading(false)
     }
-  }
+  }, [selectedVisibility, selectedTag, searchTerm, setMemos, setMemosLoading])
 
-  const loadTags = async () => {
+  const loadTags = useCallback(async () => {
     setTagsLoading(true)
     try {
       const tagsData = await tagApi.getTags()
@@ -60,11 +60,53 @@ export default function HomePage() {
     } finally {
       setTagsLoading(false)
     }
-  }
+  }, [setTags, setTagsLoading])
 
-  const handleMemoCreated = (memo: any) => {
+  // 首次加载
+  useEffect(() => {
+    loadMemos()
+    loadTags()
+  }, [loadMemos, loadTags])
+
+  const handleMemoCreated = (memo: Memo) => {
     addMemo(memo)
     setShowEditor(false)
+    // 重新加载标签，因为可能有新标签
+    loadTags()
+  }
+
+  // 过滤后的备忘录统计
+  const memoStats = useMemo(() => {
+    const total = memos.length
+    const publicCount = memos.filter((m: Memo) => m.visibility === 'PUBLIC').length
+    const privateCount = memos.filter((m: Memo) => m.visibility === 'PRIVATE').length
+    const todayCount = memos.filter((m: Memo) => {
+      const today = new Date().toDateString()
+      const memoDate = new Date(m.created_at * 1000).toDateString()
+      return today === memoDate
+    }).length
+
+    return { total, publicCount, privateCount, todayCount }
+  }, [memos])
+
+  const renderContent = () => {
+    switch (viewMode) {
+      case 'calendar':
+        return <CalendarView memos={memos} onDateSelect={(date: Date) => {
+          // 可以根据日期过滤备忘录
+          console.log('Selected date:', date)
+        }} />
+      case 'stats':
+        return <StatsPanel memos={memos} tags={tags} />
+      default:
+        return (
+          <div className="space-y-4">
+            {memos.map((memo: Memo) => (
+              <MemoCard key={memo.id} memo={memo} />
+            ))}
+          </div>
+        )
+    }
   }
 
   return (
@@ -72,6 +114,47 @@ export default function HomePage() {
       {/* 左侧过滤面板 */}
       <div className="w-80 bg-card border-r border-border p-4 overflow-y-auto">
         <div className="space-y-6">
+          {/* 统计信息 */}
+          <div className="bg-background/50 rounded-lg p-3">
+            <h3 className="text-sm font-medium text-foreground mb-2">统计</h3>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>总计: {memoStats.total}</div>
+              <div>今日: {memoStats.todayCount}</div>
+              <div>公开: {memoStats.publicCount}</div>
+              <div>私有: {memoStats.privateCount}</div>
+            </div>
+          </div>
+
+          {/* 视图模式切换 */}
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">
+              视图模式
+            </label>
+            <div className="flex space-x-1 bg-background/50 rounded-lg p-1">
+              {[
+                { value: 'list', label: '列表', icon: LayoutIcon },
+                { value: 'calendar', label: '日历', icon: CalendarIcon },
+                { value: 'stats', label: '统计', icon: GridIcon }
+              ].map((mode) => {
+                const Icon = mode.icon
+                return (
+                  <button
+                    key={mode.value}
+                    onClick={() => setViewMode(mode.value as any)}
+                    className={`flex-1 flex items-center justify-center px-2 py-1 rounded text-xs transition-colors ${
+                      viewMode === mode.value 
+                        ? 'bg-primary text-primary-foreground' 
+                        : 'hover:bg-accent'
+                    }`}
+                  >
+                    <Icon className="w-3 h-3 mr-1" />
+                    {mode.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {/* 搜索 */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
@@ -120,7 +203,7 @@ export default function HomePage() {
             <label className="block text-sm font-medium text-foreground mb-2">
               标签
             </label>
-            <div className="space-y-1">
+            <div className="space-y-1 max-h-48 overflow-y-auto">
               <button
                 onClick={() => setSelectedTag(null)}
                 className={`w-full text-left px-2 py-1 rounded text-sm transition-colors ${
@@ -131,7 +214,7 @@ export default function HomePage() {
               >
                 全部标签
               </button>
-              {tags.map((tag) => (
+              {tags.map((tag: Tag) => (
                 <button
                   key={tag.id}
                   onClick={() => setSelectedTag(tag.name)}
@@ -172,7 +255,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* 备忘录列表 */}
+        {/* 内容区 */}
         <div className="flex-1 overflow-y-auto p-4">
           {memosLoading ? (
             <div className="flex items-center justify-center h-32">
@@ -189,11 +272,7 @@ export default function HomePage() {
               </button>
             </div>
           ) : (
-            <div className="space-y-4">
-              {memos.map((memo) => (
-                <MemoCard key={memo.id} memo={memo} />
-              ))}
-            </div>
+            renderContent()
           )}
         </div>
       </div>

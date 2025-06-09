@@ -1,15 +1,6 @@
 import { ApiResponse, Env, JWTPayload, User } from './types';
-
-// 声明外部依赖类型
-declare const bcrypt: {
-  hash(data: string, saltOrRounds: number): Promise<string>;
-  compare(data: string, encrypted: string): Promise<boolean>;
-};
-
-declare const jwt: {
-  sign(payload: any, secretOrPrivateKey: string): string;
-  verify(token: string, secretOrPublicKey: string): any;
-};
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 // API响应工具函数
 export function success<T>(data: T, message?: string): ApiResponse<T> {

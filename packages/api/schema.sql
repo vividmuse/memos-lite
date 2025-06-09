@@ -76,7 +76,7 @@ CREATE INDEX IF NOT EXISTS idx_memo_tags_tag_id ON memo_tags(tag_id);
 
 -- 插入默认管理员用户 (admin/admin123)
 INSERT OR IGNORE INTO users (username, password_hash, role) 
-VALUES ('admin', '$2a$10$YourHashedPasswordHere', 'ADMIN');
+VALUES ('admin', '$2a$10$rdpPAY0icgelnoTNERBRZeED5Uyz8/No9f36mqmE4ia00dgttk.wK', 'ADMIN');
 
 -- 插入默认设置
 INSERT OR IGNORE INTO settings (key, value) VALUES
