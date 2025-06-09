@@ -48,18 +48,19 @@ export default function MemoCard({ memo, onEdit }: MemoCardProps) {
   }
 
   const truncateContent = (content: string, maxLength = 200) => {
+    if (!content) return ''
     if (content.length <= maxLength) return content
     return content.substring(0, maxLength) + '...'
   }
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(memo.content)
+    navigator.clipboard.writeText(memo.content || '')
     // 可以添加成功提示
   }
 
-  const hasCodeBlock = memo.content.includes('```')
-  const hasTaskList = memo.content.includes('- [ ]') || memo.content.includes('- [x]')
-  const hasMarkdown = /[*_`#\[\]!]/.test(memo.content)
+  const hasCodeBlock = memo.content?.includes('```') || false
+  const hasTaskList = (memo.content?.includes('- [ ]') || memo.content?.includes('- [x]')) || false
+  const hasMarkdown = memo.content ? /[*_`#\[\]!]/.test(memo.content) : false
 
   return (
     <div className="group bg-card border border-border rounded-lg hover:shadow-md transition-all duration-200 overflow-hidden">
@@ -158,7 +159,7 @@ export default function MemoCard({ memo, onEdit }: MemoCardProps) {
           ) : (
             <div className="text-foreground">
               <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {truncateContent(memo.content)}
+                {truncateContent(memo.content || '')}
               </p>
             </div>
           )}

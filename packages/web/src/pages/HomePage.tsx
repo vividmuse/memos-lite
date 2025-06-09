@@ -41,7 +41,21 @@ export default function HomePage() {
       }
       
       const result = await memoApi.getMemos(params)
-      const memosData = Array.isArray(result) ? result : result.data
+      // 处理不同的 API 响应格式
+      let memosData: any[] = []
+      if (Array.isArray(result)) {
+        memosData = result
+      } else if (result && typeof result === 'object') {
+        // 处理分页响应格式
+        if ('data' in result) {
+          memosData = (result as any).data || []
+        } else if ('items' in result) {
+          memosData = (result as any).items || []
+        } else {
+          // 如果结果本身就是数据对象，尝试提取
+          memosData = []
+        }
+      }
       setMemos(memosData)
     } catch (error) {
       console.error('Failed to load memos:', error)
@@ -73,6 +87,10 @@ export default function HomePage() {
     setShowEditor(false)
     // 重新加载标签，因为可能有新标签
     loadTags()
+    // 强制重新加载备忘录列表以确保同步
+    setTimeout(() => {
+      loadMemos()
+    }, 100)
   }
 
   // 过滤后的备忘录统计
