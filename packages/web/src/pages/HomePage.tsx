@@ -1,19 +1,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { SearchIcon, TagIcon, CalendarIcon, LayoutIcon, GridIcon } from 'lucide-react'
+import { SearchIcon, TagIcon, FilterIcon, PlusIcon, HashIcon } from 'lucide-react'
 import { memoApi, tagApi } from '@/utils/api'
 import { useMemoStore, useTagStore } from '@/store'
 import { Memo, Tag } from '@/types'
 import MemoCard from '@/components/MemoCard'
 import MemoEditor from '@/components/MemoEditor'
-import CalendarView from '@/components/CalendarView'
-import StatsPanel from '@/components/StatsPanel'
 
 export default function HomePage() {
   const [showEditor, setShowEditor] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedVisibility, setSelectedVisibility] = useState<'ALL' | 'PUBLIC' | 'PRIVATE'>('ALL')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
-  const [viewMode, setViewMode] = useState<'list' | 'calendar' | 'stats'>('list')
+  const [showFilters, setShowFilters] = useState(false)
 
   const { 
     memos, 
@@ -96,211 +94,183 @@ export default function HomePage() {
   // 过滤后的备忘录统计
   const memoStats = useMemo(() => {
     const total = memos.length
-    const publicCount = memos.filter((m: Memo) => m.visibility === 'PUBLIC').length
-    const privateCount = memos.filter((m: Memo) => m.visibility === 'PRIVATE').length
     const todayCount = memos.filter((m: Memo) => {
       const today = new Date().toDateString()
       const memoDate = new Date(m.created_at * 1000).toDateString()
       return today === memoDate
     }).length
 
-    return { total, publicCount, privateCount, todayCount }
+    return { total, todayCount }
   }, [memos])
 
-  const renderContent = () => {
-    switch (viewMode) {
-      case 'calendar':
-        return <CalendarView memos={memos} onDateSelect={(date: Date) => {
-          // 可以根据日期过滤备忘录
-          console.log('Selected date:', date)
-        }} />
-      case 'stats':
-        return <StatsPanel memos={memos} tags={tags} />
-      default:
-        return (
-          <div className="space-y-4">
-            {memos.map((memo: Memo) => (
-              <MemoCard key={memo.id} memo={memo} />
-            ))}
-          </div>
-        )
-    }
-  }
+  const hasActiveFilters = selectedVisibility !== 'ALL' || selectedTag || searchTerm
 
   return (
-    <div className="h-full flex">
-      {/* 左侧过滤面板 */}
-      <div className="w-80 bg-card border-r border-border p-4 overflow-y-auto">
-        <div className="space-y-6">
-          {/* 统计信息 */}
-          <div className="bg-background/50 rounded-lg p-3">
-            <h3 className="text-sm font-medium text-foreground mb-2">统计</h3>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>总计: {memoStats.total}</div>
-              <div>今日: {memoStats.todayCount}</div>
-              <div>公开: {memoStats.publicCount}</div>
-              <div>私有: {memoStats.privateCount}</div>
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* 页面头部 */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">我的备忘录</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            总计 {memoStats.total} 条，今日新增 {memoStats.todayCount} 条
+          </p>
+        </div>
+        
+        <button
+          onClick={() => setShowEditor(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+        >
+          <PlusIcon className="w-4 h-4" />
+          新建备忘录
+        </button>
+      </div>
 
-          {/* 视图模式切换 */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              视图模式
-            </label>
-            <div className="flex space-x-1 bg-background/50 rounded-lg p-1">
-              {[
-                { value: 'list', label: '列表', icon: LayoutIcon },
-                { value: 'calendar', label: '日历', icon: CalendarIcon },
-                { value: 'stats', label: '统计', icon: GridIcon }
-              ].map((mode) => {
-                const Icon = mode.icon
-                return (
-                  <button
-                    key={mode.value}
-                    onClick={() => setViewMode(mode.value as any)}
-                    className={`flex-1 flex items-center justify-center px-2 py-1 rounded text-xs transition-colors ${
-                      viewMode === mode.value 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'hover:bg-accent'
-                    }`}
-                  >
-                    <Icon className="w-3 h-3 mr-1" />
-                    {mode.label}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+      {/* 搜索和过滤 */}
+      <div className="space-y-4">
+        {/* 搜索栏 */}
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="搜索备忘录内容..."
+            className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
 
-          {/* 搜索 */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              搜索
-            </label>
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="搜索备忘录..."
-                className="w-full pl-10 pr-3 py-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              />
-            </div>
-          </div>
+        {/* 过滤器 */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg font-medium transition-colors ${
+              hasActiveFilters || showFilters
+                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            <FilterIcon className="w-4 h-4" />
+            过滤器
+            {hasActiveFilters && (
+              <span className="ml-1 px-1.5 py-0.5 bg-blue-600 text-white text-xs rounded-full">
+                {[selectedVisibility !== 'ALL', selectedTag, searchTerm].filter(Boolean).length}
+              </span>
+            )}
+          </button>
 
-          {/* 可见性过滤 */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              可见性
-            </label>
-            <div className="space-y-2">
-              {[
-                { value: 'ALL', label: '全部' },
-                { value: 'PUBLIC', label: '公开' },
-                { value: 'PRIVATE', label: '私有' }
-              ].map((option) => (
-                <label key={option.value} className="flex items-center">
-                  <input
-                    type="radio"
-                    name="visibility"
-                    value={option.value}
-                    checked={selectedVisibility === option.value}
-                    onChange={(e) => setSelectedVisibility(e.target.value as any)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">{option.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          {/* 快捷过滤 */}
+          {['ALL', 'PUBLIC', 'PRIVATE'].map((visibility) => (
+            <button
+              key={visibility}
+              onClick={() => setSelectedVisibility(visibility as any)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedVisibility === visibility
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              {visibility === 'ALL' ? '全部' : visibility === 'PUBLIC' ? '公开' : '私有'}
+            </button>
+          ))}
+        </div>
 
-          {/* 标签过滤 */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              标签
-            </label>
-            <div className="space-y-1 max-h-48 overflow-y-auto">
-              <button
-                onClick={() => setSelectedTag(null)}
-                className={`w-full text-left px-2 py-1 rounded text-sm transition-colors ${
-                  selectedTag === null 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'hover:bg-accent'
-                }`}
-              >
-                全部标签
-              </button>
-              {tags.map((tag: Tag) => (
+        {/* 展开的过滤器 */}
+        {showFilters && (
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4">
+            {/* 标签过滤 */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                按标签过滤
+              </label>
+              <div className="flex flex-wrap gap-2">
                 <button
-                  key={tag.id}
-                  onClick={() => setSelectedTag(tag.name)}
-                  className={`w-full text-left px-2 py-1 rounded text-sm transition-colors flex items-center justify-between ${
-                    selectedTag === tag.name 
-                      ? 'bg-primary text-primary-foreground' 
-                      : 'hover:bg-accent'
+                  onClick={() => setSelectedTag(null)}
+                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-colors ${
+                    !selectedTag
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                   }`}
                 >
-                  <span className="flex items-center">
-                    <TagIcon className="w-3 h-3 mr-1" />
-                    {tag.name}
-                  </span>
-                  {tag.memo_count && (
-                    <span className="text-xs opacity-70">{tag.memo_count}</span>
-                  )}
+                  全部标签
                 </button>
-              ))}
+                {tags.map((tag: Tag) => (
+                  <button
+                    key={tag.id}
+                    onClick={() => setSelectedTag(selectedTag === tag.name ? null : tag.name)}
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm transition-colors ${
+                      selectedTag === tag.name
+                        ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    <HashIcon className="w-3 h-3" />
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* 重置过滤器 */}
+            {hasActiveFilters && (
+              <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => {
+                    setSearchTerm('')
+                    setSelectedVisibility('ALL')
+                    setSelectedTag(null)
+                  }}
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  清除所有过滤器
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
-      {/* 右侧内容区 */}
-      <div className="flex-1 flex flex-col">
-        {/* 顶部操作栏 */}
-        <div className="p-4 border-b border-border bg-card">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">
-              我的备忘录 ({memos.length})
-            </h2>
-            <button
-              onClick={() => setShowEditor(true)}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-            >
-              写备忘录
-            </button>
+      {/* 备忘录列表 */}
+      <div className="space-y-4">
+        {memosLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
-        </div>
-
-        {/* 内容区 */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {memosLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <div className="text-muted-foreground">加载中...</div>
+        ) : memos.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 dark:text-gray-500 mb-4">
+              <TagIcon className="w-12 h-12 mx-auto mb-4" />
+              {hasActiveFilters ? '没有找到匹配的备忘录' : '还没有备忘录'}
             </div>
-          ) : memos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-32 text-muted-foreground">
-              <p>暂无备忘录</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-6">
+              {hasActiveFilters ? '尝试调整过滤条件' : '点击上方按钮创建你的第一条备忘录'}
+            </p>
+            {!hasActiveFilters && (
               <button
                 onClick={() => setShowEditor(true)}
-                className="mt-2 text-primary hover:underline"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
               >
-                创建第一个备忘录
+                <PlusIcon className="w-4 h-4" />
+                新建备忘录
               </button>
-            </div>
-          ) : (
-            renderContent()
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          memos.map((memo: Memo) => (
+            <MemoCard key={memo.id} memo={memo} />
+          ))
+        )}
       </div>
 
-      {/* 备忘录编辑器弹窗 */}
+      {/* 编辑器模态框 */}
       {showEditor && (
-        <MemoEditor
-          onClose={() => setShowEditor(false)}
-          onSave={handleMemoCreated}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-4xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-lg shadow-xl overflow-hidden">
+                         <MemoEditor
+               onSave={handleMemoCreated}
+               onClose={() => setShowEditor(false)}
+             />
+          </div>
+        </div>
       )}
     </div>
   )

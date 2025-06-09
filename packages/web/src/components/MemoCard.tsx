@@ -9,7 +9,9 @@ import {
   CopyIcon,
   EditIcon,
   MoreHorizontalIcon,
-  TagIcon
+  TagIcon,
+  HashIcon,
+  ClockIcon
 } from 'lucide-react'
 import MarkdownPreview from './MarkdownPreview'
 
@@ -29,7 +31,8 @@ export default function MemoCard({ memo, onEdit }: MemoCardProps) {
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
     
     if (diffInHours < 1) {
-      return '刚刚'
+      const diffInMinutes = Math.floor(diffInHours * 60)
+      return diffInMinutes <= 0 ? '刚刚' : `${diffInMinutes} 分钟前`
     } else if (diffInHours < 24) {
       return `${Math.floor(diffInHours)} 小时前`
     } else if (diffInHours < 24 * 7) {
@@ -38,95 +41,108 @@ export default function MemoCard({ memo, onEdit }: MemoCardProps) {
       return date.toLocaleDateString('zh-CN', {
         year: 'numeric',
         month: 'short',
-        day: 'numeric'
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       })
     }
   }
 
-  const formatFullDate = (timestamp: number) => {
-    return new Date(timestamp * 1000).toLocaleString('zh-CN')
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(memo.content || '')
+      // 可以添加成功提示
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+    setShowActions(false)
   }
 
-  const truncateContent = (content: string, maxLength = 200) => {
-    if (!content) return ''
-    if (content.length <= maxLength) return content
-    return content.substring(0, maxLength) + '...'
-  }
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(memo.content || '')
-    // 可以添加成功提示
-  }
-
-  const hasCodeBlock = memo.content?.includes('```') || false
-  const hasTaskList = (memo.content?.includes('- [ ]') || memo.content?.includes('- [x]')) || false
   const hasMarkdown = memo.content ? /[*_`#\[\]!]/.test(memo.content) : false
+  const isLongContent = memo.content?.length > 300
 
   return (
-    <div className="group bg-card border border-border rounded-lg hover:shadow-md transition-all duration-200 overflow-hidden">
+    <article className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md transition-all duration-200 group">
       {/* 头部信息 */}
-      <div className="p-4 pb-2">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <span className="font-medium">@{memo.username}</span>
-            <span>•</span>
-            <span title={formatFullDate(memo.created_at)}>
-              <CalendarIcon className="w-3 h-3 inline mr-1" />
-              {formatDate(memo.created_at)}
+      <header className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex items-center gap-3">
+          {/* 用户头像 */}
+          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-sm font-medium">
+              {memo.username?.charAt(0).toUpperCase() || 'U'}
             </span>
           </div>
           
-          <div className="flex items-center space-x-2">
-            {/* 状态标识 */}
-            <div className="flex items-center space-x-1">
-              {memo.pinned === 1 && (
-                <div className="flex items-center px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">
-                  <PinIcon className="w-3 h-3 mr-1" />
-                  置顶
-                </div>
-              )}
-              
+          {/* 用户信息和时间 */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+            <span className="font-medium text-gray-900 dark:text-white text-sm">
+              {memo.username || '匿名用户'}
+            </span>
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+              <ClockIcon className="w-3 h-3" />
+              <time>{formatDate(memo.created_at)}</time>
+            </div>
+          </div>
+        </div>
+
+        {/* 状态和操作 */}
+        <div className="flex items-center gap-2">
+          {/* 状态标识 */}
+          <div className="flex items-center gap-2">
+            {memo.pinned === 1 && (
+              <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full text-xs">
+                <PinIcon className="w-3 h-3" />
+                <span className="hidden sm:inline">置顶</span>
+              </div>
+            )}
+            
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+              memo.visibility === 'PUBLIC'
+                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+            }`}>
               {memo.visibility === 'PUBLIC' ? (
-                <div className="flex items-center px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                  <EyeIcon className="w-3 h-3 mr-1" />
-                  公开
-                </div>
+                <>
+                  <EyeIcon className="w-3 h-3" />
+                  <span className="hidden sm:inline">公开</span>
+                </>
               ) : (
-                <div className="flex items-center px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
-                  <LockIcon className="w-3 h-3 mr-1" />
-                  私有
-                </div>
+                <>
+                  <LockIcon className="w-3 h-3" />
+                  <span className="hidden sm:inline">私有</span>
+                </>
               )}
             </div>
+          </div>
 
-            {/* 操作菜单 */}
-            <div className="relative">
-              <button
-                onClick={() => setShowActions(!showActions)}
-                className="p-1 opacity-0 group-hover:opacity-100 hover:bg-accent rounded transition-all"
-              >
-                <MoreHorizontalIcon className="w-4 h-4" />
-              </button>
-              
-              {showActions && (
-                <div className="absolute right-0 top-8 z-10 bg-popover border border-border rounded-md shadow-lg py-1 min-w-[120px]">
+          {/* 操作菜单 */}
+          <div className="relative">
+            <button
+              onClick={() => setShowActions(!showActions)}
+              className="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all"
+            >
+              <MoreHorizontalIcon className="w-4 h-4" />
+            </button>
+            
+            {showActions && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowActions(false)} />
+                <div className="absolute right-0 top-8 z-20 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[140px]">
                   <button
                     onClick={() => {
                       setShowPreview(!showPreview)
                       setShowActions(false)
                     }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-accent"
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                   >
+                    <EyeIcon className="w-3 h-3" />
                     {showPreview ? '隐藏预览' : '显示预览'}
                   </button>
                   <button
-                    onClick={() => {
-                      copyToClipboard()
-                      setShowActions(false)
-                    }}
-                    className="w-full px-3 py-2 text-left text-sm hover:bg-accent"
+                    onClick={copyToClipboard}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <CopyIcon className="w-3 h-3 inline mr-2" />
+                    <CopyIcon className="w-3 h-3" />
                     复制内容
                   </button>
                   {onEdit && (
@@ -135,108 +151,101 @@ export default function MemoCard({ memo, onEdit }: MemoCardProps) {
                         onEdit(memo)
                         setShowActions(false)
                       }}
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-accent"
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                     >
-                      <EditIcon className="w-3 h-3 inline mr-2" />
+                      <EditIcon className="w-3 h-3" />
                       编辑
                     </button>
                   )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
-      </div>
+      </header>
 
       {/* 内容区域 */}
-      <div className="px-4 pb-3">
+      <div className="px-4 py-4">
         {/* 内容预览/渲染 */}
-        <div className="mb-3">
+        <div className="mb-4">
           {showPreview && hasMarkdown ? (
-            <div className="border border-border rounded-md bg-background/50">
+            <div className="prose prose-sm dark:prose-invert max-w-none">
               <MarkdownPreview content={memo.content} />
             </div>
           ) : (
-            <div className="text-foreground">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {truncateContent(memo.content || '')}
+            <div className="text-gray-900 dark:text-gray-100">
+              <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                {isLongContent && !showPreview 
+                  ? memo.content?.substring(0, 300) + '...' 
+                  : memo.content
+                }
               </p>
+              {isLongContent && !showPreview && (
+                <button
+                  onClick={() => setShowPreview(true)}
+                  className="text-blue-600 dark:text-blue-400 text-sm mt-2 hover:underline"
+                >
+                  显示更多
+                </button>
+              )}
             </div>
           )}
         </div>
 
-        {/* 内容特性标识 */}
-        {(hasCodeBlock || hasTaskList || hasMarkdown) && (
-          <div className="flex items-center space-x-2 mb-3">
-            {hasCodeBlock && (
-              <span className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                代码
-              </span>
-            )}
-            {hasTaskList && (
-              <span className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs">
-                清单
-              </span>
-            )}
-            {hasMarkdown && (
-              <button
-                onClick={() => setShowPreview(!showPreview)}
-                className="inline-flex items-center px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs hover:bg-indigo-200 transition-colors"
-              >
-                {showPreview ? '原文' : '预览'}
-              </button>
-            )}
-          </div>
-        )}
-
         {/* 标签 */}
         {memo.tags && memo.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {memo.tags.slice(0, 5).map((tag: any) => (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {memo.tags.slice(0, 6).map((tag: any) => (
               <Link
                 key={tag.id}
-                to={`/tags/${tag.name}`}
-                className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded-full text-xs hover:bg-primary/20 transition-colors"
+                to={`/tags/${encodeURIComponent(tag.name)}`}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
-                <TagIcon className="w-3 h-3 mr-1" />
+                <HashIcon className="w-3 h-3" />
                 {tag.name}
               </Link>
             ))}
-            {memo.tags.length > 5 && (
-              <span className="text-xs text-muted-foreground px-2 py-1">
-                +{memo.tags.length - 5} 更多
+            {memo.tags.length > 6 && (
+              <span className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-xs">
+                +{memo.tags.length - 6}
               </span>
             )}
           </div>
         )}
 
         {/* 底部信息 */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <div className="flex items-center space-x-3">
-            {memo.comments_count > 0 && (
-              <div className="flex items-center space-x-1">
-                <MessageSquareIcon className="w-3 h-3" />
-                <span>{memo.comments_count}</span>
-              </div>
+        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-4">
+            {/* Markdown 标识 */}
+            {hasMarkdown && (
+              <button
+                onClick={() => setShowPreview(!showPreview)}
+                className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              >
+                <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                {showPreview ? '原文' : 'Markdown'}
+              </button>
             )}
             
-            {memo.updated_at !== memo.created_at && (
-              <span title={formatFullDate(memo.updated_at)}>
-                已编辑
-              </span>
+            {/* 评论数 */}
+            {memo.comment_count > 0 && (
+              <div className="flex items-center gap-1">
+                <MessageSquareIcon className="w-3 h-3" />
+                <span>{memo.comment_count}</span>
+              </div>
             )}
           </div>
 
+          {/* 详情链接 */}
           <Link
             to={`/memo/${memo.id}`}
-            className="text-primary hover:underline text-xs"
-            onClick={(e) => e.stopPropagation()}
+            className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
-            查看详情 →
+            查看详情
           </Link>
         </div>
       </div>
-    </div>
+    </article>
   )
 } 
