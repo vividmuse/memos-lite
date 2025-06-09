@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { TagIcon, HashIcon, ArrowLeftIcon } from 'lucide-react'
 import { memoApi, tagApi } from '@/utils/api'
-import { useMemoStore, useTagStore } from '@/store'
+import { useTagStore } from '@/store'
 import { Memo, Tag } from '@/types'
 import MemoCard from '@/components/MemoCard'
 

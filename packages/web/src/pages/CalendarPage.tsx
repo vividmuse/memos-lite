@@ -15,11 +15,9 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [memos, setMemos] = useState<Memo[]>([])
-  const [loading, setLoading] = useState(false)
   const [dayMemos, setDayMemos] = useState<Memo[]>([])
 
   const loadMemos = async () => {
-    setLoading(true)
     try {
       const result = await memoApi.getMemos({ limit: 1000 }) // 获取更多数据用于日历显示
       let memosData: Memo[] = []
@@ -35,8 +33,6 @@ export default function CalendarPage() {
       setMemos(memosData)
     } catch (error) {
       console.error('Failed to load memos:', error)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -64,7 +60,6 @@ export default function CalendarPage() {
     const month = currentDate.getMonth()
     
     const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
     const startDate = new Date(firstDay)
     startDate.setDate(startDate.getDate() - firstDay.getDay())
     
