@@ -614,7 +614,11 @@
 
 /* Legacy markdown content styles */
 .markdown-content {
-  @apply prose prose-sm dark:prose-invert max-w-none;
+  @apply prose prose-sm max-w-none;
+}
+
+.dark .markdown-content {
+  @apply prose-invert;
 }
 
 .markdown-content h1 {
