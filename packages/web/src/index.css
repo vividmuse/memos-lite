@@ -60,7 +60,7 @@
 
 /* Markdown样式 */
 .markdown-content {
-  @apply prose prose-slate max-w-none;
+  @apply max-w-none text-foreground;
 }
 
 .markdown-content h1 {
