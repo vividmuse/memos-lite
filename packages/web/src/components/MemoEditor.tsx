@@ -12,7 +12,7 @@ export default function MemoEditor({ onClose, onSave, editingMemo }: MemoEditorP
   const [content, setContent] = useState(editingMemo?.content || '')
   const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE'>(editingMemo?.visibility || 'PRIVATE')
   const [pinned, setPinned] = useState(editingMemo?.pinned === 1 || false)
-  const [tags, setTags] = useState(editingMemo?.tags?.map((t: any) => t.name).join(', ') || '')
+  const [tags, setTags] = useState(editingMemo?.tags?.map((t: { name: string }) => t.name).join(', ') || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -30,7 +30,7 @@ export default function MemoEditor({ onClose, onSave, editingMemo }: MemoEditorP
         content: content.trim(),
         visibility,
         pinned,
-        tags: tags.split(',').map(t => t.trim()).filter(t => t)
+        tags: tags.split(',').map((t: string) => t.trim()).filter((t: string) => t)
       }
 
       let savedMemo

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { EyeIcon, EyeOffIcon } from 'lucide-react'
 import { useAuthStore, useAppStore } from '@/store'
 import { authApi, getErrorMessage } from '@/utils/api'

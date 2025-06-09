@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { SearchIcon, TagIcon, FilterIcon } from 'lucide-react'
+import { SearchIcon, TagIcon } from 'lucide-react'
 import { memoApi, tagApi } from '@/utils/api'
 import { useMemoStore, useTagStore } from '@/store'
 import MemoCard from '@/components/MemoCard'
@@ -21,7 +21,6 @@ export default function HomePage() {
   
   const { 
     tags, 
-    loading: tagsLoading, 
     setTags, 
     setLoading: setTagsLoading 
   } = useTagStore()
