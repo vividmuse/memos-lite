@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { PlusIcon, RefreshCwIcon } from 'lucide-react'
 import { memoApi, tagApi } from '@/utils/api'
-import { useMemoStore, useTagStore } from '@/store'
 import { Memo } from '@/types'
 import MemoCard from '@/components/MemoCard'
 import MemoEditor from '@/components/MemoEditor'
+import { useMemoStore, useTagStore } from '@/store'
 import { useDebounce } from '@/hooks/useDebounce'
 
 export default function HomePage() {
   const [showEditor, setShowEditor] = useState(false)
-  const [refreshing, setRefreshing] = useState(false)
   const [editingMemo, setEditingMemo] = useState<Memo | null>(null)
-
+  const [refreshing, setRefreshing] = useState(false)
+  
   const { 
     memos, 
     loading: memosLoading, 
@@ -20,7 +20,8 @@ export default function HomePage() {
     addMemo,
     updateMemo,
     removeMemo,
-    searchTerm
+    searchTerm,
+    selectedTags
   } = useMemoStore()
   
   const { setTags, setLoading: setTagsLoading } = useTagStore()
@@ -29,7 +30,7 @@ export default function HomePage() {
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
   // 使用 useCallback 避免无限循环
-  const loadMemos = useCallback(async (search?: string) => {
+  const loadMemos = useCallback(async (search?: string, tags?: string[]) => {
     setMemosLoading(true)
     try {
       const params: any = {
@@ -42,11 +43,28 @@ export default function HomePage() {
         params.search = search.trim()
       }
       
+      // 如果有选中的标签，构建标签查询
+      if (tags && tags.length > 0) {
+        // 对于多个标签，我们可以用多个 tag 查询或者在前端过滤
+        // 这里先使用第一个标签查询，然后在前端过滤
+        params.tag = tags[0]
+      }
+      
       console.log('Loading memos with params:', params)
       const result = await memoApi.getMemos(params)
       console.log('API response:', result)
-      console.log('Memos array:', result)
-      setMemos(result)
+      
+      let filteredMemos = result || []
+      
+      // 如果有多个标签，在前端进一步过滤
+      if (tags && tags.length > 1) {
+        filteredMemos = filteredMemos.filter(memo => {
+          return tags.every(tag => memo.content.includes(`#${tag}`))
+        })
+      }
+      
+      console.log('Filtered memos:', filteredMemos)
+      setMemos(filteredMemos)
     } catch (error) {
       console.error('Failed to load memos:', error)
     } finally {
@@ -57,8 +75,12 @@ export default function HomePage() {
   const loadTags = useCallback(async () => {
     setTagsLoading(true)
     try {
-      const tagsData = await tagApi.getTags()
-      setTags(tagsData)
+      const result = await tagApi.getTags()
+      if (Array.isArray(result)) {
+        setTags(result)
+      } else {
+        setTags([])
+      }
     } catch (error) {
       console.error('Failed to load tags:', error)
     } finally {
@@ -74,8 +96,8 @@ export default function HomePage() {
 
   // 监听搜索词变化
   useEffect(() => {
-    loadMemos(debouncedSearchTerm)
-  }, [debouncedSearchTerm, loadMemos])
+    loadMemos(debouncedSearchTerm, selectedTags)
+  }, [debouncedSearchTerm, selectedTags, loadMemos])
 
   const handleMemoCreated = (memo: Memo) => {
     addMemo(memo)
@@ -85,7 +107,7 @@ export default function HomePage() {
     loadTags()
     // 强制重新加载备忘录列表以确保同步
     setTimeout(() => {
-      loadMemos(debouncedSearchTerm)
+      loadMemos(debouncedSearchTerm, selectedTags)
     }, 100)
   }
 
@@ -97,13 +119,8 @@ export default function HomePage() {
     loadTags()
     // 强制重新加载备忘录列表以确保同步
     setTimeout(() => {
-      loadMemos(debouncedSearchTerm)
+      loadMemos(debouncedSearchTerm, selectedTags)
     }, 100)
-  }
-
-  const handleEditMemo = (memo: Memo) => {
-    setEditingMemo(memo)
-    setShowEditor(true)
   }
 
   const handleDeleteMemo = async (memoId: number) => {
@@ -114,7 +131,7 @@ export default function HomePage() {
       removeMemo(memoId)
       // 重新加载备忘录列表以确保同步
       setTimeout(() => {
-        loadMemos(debouncedSearchTerm)
+        loadMemos(debouncedSearchTerm, selectedTags)
       }, 100)
     } catch (error) {
       console.error('Failed to delete memo:', error)
@@ -122,127 +139,126 @@ export default function HomePage() {
     }
   }
 
-  const handleArchiveMemo = async (memoId: number, archived: boolean) => {
+  const handleArchiveMemo = async (memoId: number) => {
     try {
-      const memo = memos.find(m => m.id === memoId)
-      if (!memo) return
-
       await memoApi.updateMemo(memoId, {
-        state: archived ? 'ARCHIVED' : 'NORMAL'
+        state: 'ARCHIVED'
       })
       
       // 重新加载备忘录列表以确保同步
       setTimeout(() => {
-        loadMemos(debouncedSearchTerm)
+        loadMemos(debouncedSearchTerm, selectedTags)
       }, 100)
     } catch (error) {
       console.error('Failed to archive memo:', error)
-      alert('归档操作失败，请重试')
+      alert('归档失败，请重试')
     }
   }
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    await loadMemos(debouncedSearchTerm)
+    await loadMemos(debouncedSearchTerm, selectedTags)
     await loadTags()
     setRefreshing(false)
   }
 
-  const handleCloseEditor = () => {
-    setShowEditor(false)
-    setEditingMemo(null)
-  }
-
   return (
-    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* 顶部编辑器区域 */}
-      <div className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-        {showEditor ? (
-          <div className="p-4">
-            <MemoEditor 
-              onClose={handleCloseEditor} 
-              onSave={editingMemo ? handleMemoUpdated : handleMemoCreated}
-              editingMemo={editingMemo}
-            />
-          </div>
-        ) : (
-          <div className="p-4">
-            <button
-              onClick={() => setShowEditor(true)}
-              className="w-full text-left p-4 text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-700 
-                       border border-gray-200 dark:border-gray-600 rounded-lg hover:border-blue-300 
-                       dark:hover:border-blue-600 transition-colors duration-200"
-            >
-              此刻的想法...
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* 主内容区域 */}
-      <div className="flex-1 flex">
-        {/* 备忘录列表 */}
-        <div className="flex-1 p-4 overflow-y-auto">
-          {/* 列表头部 */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              备忘录
-              {memos.length > 0 && (
-                <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                  ({memos.length}{searchTerm.trim() && ' 搜索结果'})
-                </span>
-              )}
-              {searchTerm.trim() && (
-                <span className="ml-2 text-sm text-blue-600 dark:text-blue-400">
-                  搜索: "{searchTerm.trim()}"
-                </span>
-              )}
-            </h2>
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center space-x-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 
-                       hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <RefreshCwIcon className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-              <span>刷新</span>
-            </button>
-          </div>
-
-          {/* 备忘录列表内容 */}
-          <div className="space-y-4">
-            {memosLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-gray-500 dark:text-gray-400">加载中...</div>
-              </div>
-            ) : memos.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-500 dark:text-gray-400 mb-4">
-                  还没有备忘录
+    <div className="flex-1 flex flex-col h-full bg-white dark:bg-gray-900">
+      {/* 主内容区 */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex">
+          {/* 备忘录列表 */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              {/* 头部 */}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  备忘录
+                  {memos.length > 0 && (
+                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                      ({memos.length}{searchTerm.trim() && ' 搜索结果'})
+                    </span>
+                  )}
+                  {searchTerm.trim() && (
+                    <span className="ml-2 text-sm text-blue-600 dark:text-blue-400">
+                      搜索: "{searchTerm.trim()}"
+                    </span>
+                  )}
+                  {selectedTags.length > 0 && (
+                    <span className="ml-2 text-sm text-green-600 dark:text-green-400">
+                      标签: {selectedTags.map(tag => `#${tag}`).join(', ')}
+                    </span>
+                  )}
+                </h2>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
+                  >
+                    <RefreshCwIcon className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  </button>
+                  <button
+                    onClick={() => setShowEditor(true)}
+                    className="flex items-center space-x-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                  >
+                    <PlusIcon className="w-4 h-4" />
+                    <span>新建</span>
+                  </button>
                 </div>
-                <button
-                  onClick={() => setShowEditor(true)}
-                  className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500 text-white rounded-lg 
-                           hover:bg-blue-600 transition-colors"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  <span>写下第一条备忘录</span>
-                </button>
               </div>
-            ) : (
-              memos.map((memo: Memo) => (
-                <MemoCard 
-                  key={memo.id} 
-                  memo={memo}
-                  onEdit={handleEditMemo}
-                  onDelete={handleDeleteMemo}
-                  onArchive={handleArchiveMemo}
-                />
-              ))
-            )}
+
+              {/* 备忘录列表 */}
+              <div className="space-y-4">
+                {memosLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="text-gray-500 dark:text-gray-400">加载中...</div>
+                  </div>
+                ) : memos.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-gray-500 dark:text-gray-400 mb-4">
+                      {searchTerm.trim() || selectedTags.length > 0 ? '没有找到符合条件的备忘录' : '还没有备忘录'}
+                    </div>
+                    {!searchTerm.trim() && selectedTags.length === 0 && (
+                      <button
+                        onClick={() => setShowEditor(true)}
+                        className="text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        创建第一个备忘录
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  memos.map((memo) => (
+                    <MemoCard
+                      key={memo.id}
+                      memo={memo}
+                      onEdit={(memo) => {
+                        setEditingMemo(memo)
+                        setShowEditor(true)
+                      }}
+                      onDelete={handleDeleteMemo}
+                      onArchive={handleArchiveMemo}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* 备忘录编辑器 */}
+      {showEditor && (
+        <MemoEditor
+          editingMemo={editingMemo}
+          onSave={editingMemo ? handleMemoUpdated : handleMemoCreated}
+          onClose={() => {
+            setShowEditor(false)
+            setEditingMemo(null)
+          }}
+        />
+      )}
     </div>
   )
 } 

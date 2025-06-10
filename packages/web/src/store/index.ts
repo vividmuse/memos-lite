@@ -116,7 +116,7 @@ interface MemoStore {
   selectedMemo: any | null;
   loading: boolean;
   searchTerm: string;
-  selectedTag: string | null;
+  selectedTags: string[]; // 改为支持多标签
   visibility: 'ALL' | 'PUBLIC' | 'PRIVATE';
   
   setMemos: (memos: any[]) => void;
@@ -126,7 +126,11 @@ interface MemoStore {
   setSelectedMemo: (memo: any | null) => void;
   setLoading: (loading: boolean) => void;
   setSearchTerm: (term: string) => void;
-  setSelectedTag: (tag: string | null) => void;
+  clearSearchTerm: () => void; // 新增清除搜索功能
+  addSelectedTag: (tag: string) => void; // 新增添加标签
+  removeSelectedTag: (tag: string) => void; // 新增移除标签
+  clearSelectedTags: () => void; // 新增清除所有标签
+  setSelectedTag: (tag: string | null) => void; // 保持向后兼容
   setVisibility: (visibility: 'ALL' | 'PUBLIC' | 'PRIVATE') => void;
   reset: () => void;
 }
@@ -136,7 +140,7 @@ export const useMemoStore = create<MemoStore>((set) => ({
   selectedMemo: null,
   loading: false,
   searchTerm: '',
-  selectedTag: null,
+  selectedTags: [],
   visibility: 'ALL',
 
   setMemos: (memos) => set({ memos }),
@@ -159,7 +163,19 @@ export const useMemoStore = create<MemoStore>((set) => ({
   
   setSearchTerm: (term) => set({ searchTerm: term }),
   
-  setSelectedTag: (tag) => set({ selectedTag: tag }),
+  clearSearchTerm: () => set({ searchTerm: '' }),
+  
+  addSelectedTag: (tag) => set((state) => ({
+    selectedTags: state.selectedTags.includes(tag) ? state.selectedTags : [...state.selectedTags, tag]
+  })),
+  
+  removeSelectedTag: (tag) => set((state) => ({
+    selectedTags: state.selectedTags.filter(t => t !== tag)
+  })),
+  
+  clearSelectedTags: () => set({ selectedTags: [] }),
+  
+  setSelectedTag: (tag) => set({ selectedTags: tag ? [tag] : [] }), // 向后兼容
   
   setVisibility: (visibility) => set({ visibility }),
   
@@ -168,7 +184,7 @@ export const useMemoStore = create<MemoStore>((set) => ({
     selectedMemo: null,
     loading: false,
     searchTerm: '',
-    selectedTag: null,
+    selectedTags: [],
     visibility: 'ALL'
   }),
 }));

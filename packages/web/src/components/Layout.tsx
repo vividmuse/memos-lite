@@ -21,21 +21,29 @@ export default function Layout() {
   const { theme, setTheme } = useAppStore()
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light')
   const { tags, setTags } = useTagStore()
-  const { memos, searchTerm, setSearchTerm } = useMemoStore()
+  const { memos, searchTerm, setSearchTerm, clearSearchTerm, selectedTags, addSelectedTag, removeSelectedTag, clearSelectedTags } = useMemoStore()
   const [currentDate, setCurrentDate] = useState(new Date())
 
   // 加载标签
   useEffect(() => {
     const loadTags = async () => {
       try {
-        const tagsData = await tagApi.getTags()
-        setTags(tagsData)
+        const result = await tagApi.getTags()
+        console.log('Tags loaded:', result)
+        // 假设 API 返回标签数组
+        if (Array.isArray(result)) {
+          setTags(result)
+        } else {
+          setTags([])
+        }
       } catch (error) {
         console.error('Failed to load tags:', error)
+        setTags([])
       }
     }
+
     loadTags()
-  }, [])
+  }, [setTags])
 
   // 获取当前月份的日历数据
   const calendarData = () => {
@@ -82,6 +90,14 @@ export default function Layout() {
     })
   }
 
+  const handleTagClick = (tagName: string) => {
+    if (selectedTags.includes(tagName)) {
+      removeSelectedTag(tagName)
+    } else {
+      addSelectedTag(tagName)
+    }
+  }
+
   return (
     <div className="h-screen flex bg-gray-50 dark:bg-gray-900">
       {/* 左侧栏 - 极简设计 */}
@@ -105,12 +121,51 @@ export default function Layout() {
               placeholder="搜索备忘录"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg 
+              className="w-full pl-10 pr-10 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg 
                        bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                        focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             />
+            {searchTerm && (
+              <button
+                onClick={clearSearchTerm}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
+
+        {/* 选中的标签显示区域 */}
+        {selectedTags.length > 0 && (
+          <div className="p-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-medium text-gray-500 dark:text-gray-400">选中的标签</span>
+              <button
+                onClick={clearSelectedTags}
+                className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                清除全部
+              </button>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {selectedTags.map(tag => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-md"
+                >
+                  #{tag}
+                  <button
+                    onClick={() => removeSelectedTag(tag)}
+                    className="ml-1 text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-100"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* 日历 */}
         <div className="p-3 border-b border-gray-200 dark:border-gray-700">
@@ -174,11 +229,14 @@ export default function Layout() {
           
           <div className="space-y-1">
             {tags.slice(0, 10).map(tag => (
-              <Link
+              <button
                 key={tag.id}
-                to={`/tags/${encodeURIComponent(tag.name)}`}
-                className="flex items-center justify-between px-2 py-1 text-sm text-gray-700 dark:text-gray-300 
-                         hover:bg-gray-200 dark:hover:bg-gray-700 rounded group"
+                onClick={() => handleTagClick(tag.name)}
+                className={`w-full flex items-center justify-between px-2 py-1 text-sm rounded group
+                  ${selectedTags.includes(tag.name) 
+                    ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' 
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
               >
                 <div className="flex items-center space-x-2">
                   <TagIcon className="w-3 h-3 text-gray-400" />
@@ -187,7 +245,7 @@ export default function Layout() {
                 <span className="text-xs text-gray-400">
                   {tag.memo_count || 0}
                 </span>
-              </Link>
+              </button>
             ))}
           </div>
         </div>
