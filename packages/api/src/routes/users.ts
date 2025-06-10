@@ -10,13 +10,22 @@ users.get('/me', authMiddleware, async (c) => {
   try {
     const currentUser = c.get('user');
     
-    // 移除敏感信息，返回用户基本信息
+    // MoeMemos 1.7.2 + Memos 0.24.0 兼容格式
     const userInfo = {
       id: currentUser.id,
+      name: currentUser.username, // MoeMemos 期望的是 name 字段
       username: currentUser.username,
+      email: "", // 空字符串，MoeMemos 可能期望这个字段
+      nickname: currentUser.username,
       role: currentUser.role,
-      createdAt: currentUser.created_at,
-      updatedAt: currentUser.updated_at
+      avatarUrl: "",
+      createdTs: (currentUser.created_at || Math.floor(Date.now() / 1000)) * 1000, // 转换为毫秒级时间戳
+      updatedTs: (currentUser.updated_at || Math.floor(Date.now() / 1000)) * 1000, // 转换为毫秒级时间戳
+      setting: {
+        locale: "zh-CN",
+        appearance: "system",
+        memoVisibility: "PRIVATE"
+      }
     };
     
     // 直接返回用户对象，兼容 MoeMemos 客户端

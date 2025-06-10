@@ -10,7 +10,7 @@ status.get('/', async (c) => {
       host: 'memos-lite',
       profile: {
         mode: 'prod',
-        version: '0.24.4', // 与官方memos兼容的版本号
+        version: '0.24.0', // 与官方memos兼容的版本号，MoeMemos 1.7.2 期望版本
         data: '/var/opt/memos', // 数据目录
         dsn: 'cloudflare-d1', // 数据库类型
         addr: '0.0.0.0',

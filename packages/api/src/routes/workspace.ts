@@ -8,7 +8,7 @@ workspace.get('/profile', async (c) => {
     // 工作区配置信息
     const workspaceProfile = {
       name: 'memos-lite',
-      version: '0.24.4',
+      version: '0.24.0',
       mode: 'prod',
       allowSignUp: false,
       disablePasswordLogin: false,

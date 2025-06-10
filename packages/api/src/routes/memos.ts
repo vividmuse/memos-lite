@@ -79,8 +79,36 @@ memos.get('/', optionalAuthMiddleware, async (c) => {
     
     const result = await c.env.DB.prepare(query).bind(...queryParams).all<Memo & { username: string }>();
     
-    // 直接返回备忘录数组，兼容 MoeMemos 客户端
-    return c.json(result.results || []);
+    // 转换为 MoeMemos 兼容格式
+    const formattedMemos = (result.results || []).map(memo => ({
+      id: memo.id,
+      name: `memo-${memo.id}`,
+      uid: `memo-${memo.id}`,
+      creatorId: memo.user_id,
+      createdTs: memo.created_at * 1000, // 转换为毫秒级时间戳
+      updatedTs: memo.updated_at * 1000, // 转换为毫秒级时间戳
+      displayTs: memo.updated_at * 1000, // 转换为毫秒级时间戳
+      content: memo.content,
+      visibility: memo.visibility,
+      pinned: Boolean(memo.pinned),
+      parent: null,
+      resources: [],
+      relations: [],
+      reactions: [],
+      property: {},
+      snippet: memo.content.substring(0, 100),
+      creator: {
+        id: memo.user_id,
+        name: memo.username,
+        username: memo.username,
+        email: "",
+        nickname: memo.username,
+        role: "USER",
+        avatarUrl: ""
+      }
+    }));
+    
+    return c.json(formattedMemos);
   } catch (err) {
     console.error('Get memos error:', err);
     return error('Failed to get memos', 500);
