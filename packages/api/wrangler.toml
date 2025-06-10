@@ -16,4 +16,9 @@ database_id = "9e215a44-48b7-49b3-b646-8992c7bca024"
 
 [vars]
 JWT_SECRET = "your-jwt-secret-key"
-CORS_ORIGIN = "*" 
+CORS_ORIGIN = "*"
+R2_PUBLIC_URL = "https://r2.51min.win"
+
+# [[r2_buckets]]
+# binding = "R2_BUCKET"
+# bucket_name = "memos-lite-assets" 

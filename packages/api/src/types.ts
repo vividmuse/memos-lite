@@ -3,6 +3,8 @@ export interface Env {
   DB: D1Database;
   JWT_SECRET: string;
   CORS_ORIGIN: string;
+  R2_BUCKET?: R2Bucket;
+  R2_PUBLIC_URL?: string;
 }
 
 // 声明全局类型以支持Cloudflare Workers D1
@@ -208,4 +210,16 @@ export interface ApiTokenResponse {
   created_at: number;
   expires_at?: number;
   last_used_at?: number;
+}
+
+// 资源类型
+export interface Resource {
+  id: number;
+  filename: string;
+  original_name: string;
+  content_type: string;
+  size: number;
+  user_id: number;
+  created_at: number;
+  url?: string;
 } 

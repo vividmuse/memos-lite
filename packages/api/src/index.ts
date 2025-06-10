@@ -9,6 +9,9 @@ import tagRoutes from './routes/tags';
 import commentRoutes from './routes/comments';
 import userRoutes from './routes/users';
 import settingsRoutes from './routes/settings';
+import statusRoutes from './routes/status';
+import workspaceRoutes from './routes/workspace';
+import resourceRoutes from './routes/resources';
 
 // 创建Hono应用实例
 const app = new Hono<{ Bindings: Env }>();
@@ -34,7 +37,11 @@ app.route('/api/v1/memos', memoRoutes);
 app.route('/api/v1/tags', tagRoutes);
 app.route('/api/v1/comments', commentRoutes);
 app.route('/api/v1/users', userRoutes);
+app.route('/api/v1/user', userRoutes);  // MoeMemos兼容路径
 app.route('/api/v1/settings', settingsRoutes);
+app.route('/api/v1/status', statusRoutes);
+app.route('/api/v1/workspace', workspaceRoutes);
+app.route('/api/v1/resources', resourceRoutes);
 
 // 兼容旧版API路径
 app.route('/api/memo', memoRoutes);

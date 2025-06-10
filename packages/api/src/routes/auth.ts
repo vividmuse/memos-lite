@@ -241,6 +241,20 @@ auth.post('/init-db', async (c) => {
       )
     `).run();
 
+    // 创建资源表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS resources (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT NOT NULL,
+        original_name TEXT NOT NULL,
+        content_type TEXT NOT NULL,
+        size INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `).run();
+
     // 插入默认管理员用户 (admin/admin123)
     const passwordHash = await hashPassword('admin123');
     await c.env.DB.prepare(
@@ -355,6 +369,20 @@ auth.post('/force-init-db', async (c) => {
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL,
         updated_at INTEGER DEFAULT (strftime('%s', 'now'))
+      )
+    `).run();
+
+    // 创建资源表
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS resources (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT NOT NULL,
+        original_name TEXT NOT NULL,
+        content_type TEXT NOT NULL,
+        size INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `).run();
 

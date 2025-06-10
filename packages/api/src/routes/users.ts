@@ -3,7 +3,29 @@ import { Env, User, UserStats } from '../types';
 import { success, error } from '../utils';
 import { authMiddleware, adminMiddleware } from '../middleware';
 
-const users = new Hono<{ Bindings: Env }>();
+const users = new Hono();
+
+// 获取当前用户信息 - MoeMemos客户端兼容
+users.get('/me', authMiddleware, async (c) => {
+  try {
+    const currentUser = c.get('user');
+    
+    // 移除敏感信息，返回用户基本信息
+    const userInfo = {
+      id: currentUser.id,
+      username: currentUser.username,
+      role: currentUser.role,
+      createdAt: currentUser.created_at,
+      updatedAt: currentUser.updated_at
+    };
+    
+    // 直接返回用户对象，兼容 MoeMemos 客户端
+    return c.json(userInfo);
+  } catch (err) {
+    console.error('Get current user error:', err);
+    return c.json({ message: 'Failed to get user info' }, 500);
+  }
+});
 
 // 获取用户统计
 users.get('/:id/stats', async (c) => {
