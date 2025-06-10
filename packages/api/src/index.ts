@@ -35,6 +35,7 @@ app.get('/', (c) => {
 app.route('/api/v1/auth', authRoutes);
 app.route('/api/v1/memos', memoRoutes);
 app.route('/api/v1/tags', tagRoutes);
+app.route('/api/v1/tag', tagRoutes);  // MoeMemos兼容路径（单数形式）
 app.route('/api/v1/comments', commentRoutes);
 app.route('/api/v1/users', userRoutes);
 app.route('/api/v1/user', userRoutes);  // MoeMemos兼容路径
@@ -45,6 +46,7 @@ app.route('/api/v1/resources', resourceRoutes);
 
 // 兼容旧版API路径
 app.route('/api/memo', memoRoutes);
+app.route('/api/v1/memo', memoRoutes);  // MoeMemos兼容路径（单数形式）
 
 // 404处理
 app.notFound((c) => {

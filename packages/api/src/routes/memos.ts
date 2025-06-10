@@ -14,10 +14,14 @@ memos.get('/', optionalAuthMiddleware, async (c) => {
     // 解析查询参数
     const visibility = url.searchParams.get('visibility');
     const state = url.searchParams.get('state');
+    const rowStatus = url.searchParams.get('rowStatus'); // MoeMemos 兼容参数
     const tag = url.searchParams.get('tag');
     const search = url.searchParams.get('search');
     const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
     const offset = Math.max(0, parseInt(url.searchParams.get('offset') || '0'));
+    
+    // 使用 rowStatus 作为 state 的备用参数（MoeMemos 兼容性）
+    const finalState = rowStatus || state;
     
     let whereConditions = [];
     let queryParams = [];
@@ -43,9 +47,9 @@ memos.get('/', optionalAuthMiddleware, async (c) => {
     }
     
     // State 过滤
-    if (state && state !== 'ALL') {
+    if (finalState && finalState !== 'ALL') {
       whereConditions.push('m.state = ?');
-      queryParams.push(state);
+      queryParams.push(finalState);
     }
     
     // 标签过滤
