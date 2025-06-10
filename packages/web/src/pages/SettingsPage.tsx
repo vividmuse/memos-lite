@@ -15,18 +15,9 @@ import {
   SettingsIcon,
   InfoIcon
 } from 'lucide-react'
-import { settingsApi } from '@/utils/api'
+import { settingsApi, authApi } from '@/utils/api'
 import { useAppStore, useAuthStore } from '@/store'
-import { Settings, User } from '@/types'
-
-interface ApiToken {
-  id: number
-  name: string
-  token: string
-  created_at: number
-  expires_at?: number
-  last_used?: number
-}
+import { Settings, User, ApiToken, CreateApiTokenRequest } from '@/types'
 
 export default function SettingsPage() {
   const { settings, setSettings } = useAppStore()
@@ -96,11 +87,11 @@ export default function SettingsPage() {
 
   const loadTokens = async () => {
     try {
-      // 这里需要添加获取API令牌的接口
-      // const tokensData = await userApi.getTokens()
-      // setTokens(tokensData)
+      const tokensData = await authApi.getTokens()
+      setTokens(tokensData)
     } catch (error) {
       console.error('Failed to load tokens:', error)
+      showMessage('error', '加载API令牌失败')
     }
   }
 
@@ -193,18 +184,15 @@ export default function SettingsPage() {
         expiresAt = now + (days * 24 * 60 * 60)
       }
 
-      // 这里需要添加创建API令牌的接口
-      const token = 'memo_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-      const newTokenData = {
-        id: Date.now(),
-        name: newTokenName,
-        token: token,
-        created_at: Date.now() / 1000,
+      const tokenData: CreateApiTokenRequest = {
+        name: newTokenName.trim(),
         expires_at: expiresAt
       }
+
+      const createdToken = await authApi.createToken(tokenData)
       
-      setTokens(prev => [newTokenData, ...prev])
-      setNewToken(token)
+      setTokens(prev => [createdToken, ...prev])
+      setNewToken(createdToken.token || '')
       setNewTokenName('')
       setNewTokenExpiry('never')
       setShowTokenForm(false)
@@ -221,7 +209,7 @@ export default function SettingsPage() {
     }
 
     try {
-      // 这里需要添加删除API令牌的接口
+      await authApi.deleteToken(tokenId)
       setTokens(prev => prev.filter(t => t.id !== tokenId))
       showMessage('success', 'API令牌删除成功')
     } catch (error) {
@@ -777,7 +765,7 @@ export default function SettingsPage() {
                     </div>
                                       <div className="text-sm text-gray-500 dark:text-gray-400">
                     创建于 {formatDate(token.created_at)}
-                    {token.last_used && ` • 最后使用 ${formatDate(token.last_used)}`}
+                    {token.last_used_at && ` • 最后使用 ${formatDate(token.last_used_at)}`}
                     {token.expires_at && (
                       <span className={`ml-2 ${isTokenExpired(token) ? 'text-red-600 dark:text-red-400' : ''}`}>
                         • {isTokenExpired(token) ? '已过期' : `过期时间 ${formatDate(token.expires_at)}`}
@@ -787,27 +775,33 @@ export default function SettingsPage() {
                   </div>
                     <div className="flex items-center gap-2 mt-2">
                       <code className="text-sm bg-white dark:bg-gray-800 px-2 py-1 rounded border">
-                        {visibleTokens.has(token.id) 
-                          ? token.token 
-                          : `${token.token.substring(0, 8)}...${token.token.substring(token.token.length - 4)}`
+                        {token.token 
+                          ? (visibleTokens.has(token.id) 
+                              ? token.token 
+                              : `${token.token.substring(0, 8)}...${token.token.substring(token.token.length - 4)}`)
+                          : `Token ID: ${token.token_id}`
                         }
                       </code>
-                      <button
-                        onClick={() => toggleTokenVisibility(token.id)}
-                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                      >
-                        {visibleTokens.has(token.id) ? (
-                          <EyeOffIcon className="w-4 h-4" />
-                        ) : (
-                          <EyeIcon className="w-4 h-4" />
-                        )}
-                      </button>
-                      <button
-                        onClick={() => copyToken(token.token)}
-                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                      >
-                        <CopyIcon className="w-4 h-4" />
-                      </button>
+                      {token.token && (
+                        <>
+                          <button
+                            onClick={() => toggleTokenVisibility(token.id)}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                          >
+                            {visibleTokens.has(token.id) ? (
+                              <EyeOffIcon className="w-4 h-4" />
+                            ) : (
+                              <EyeIcon className="w-4 h-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => copyToken(token.token!)}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                          >
+                            <CopyIcon className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                   <button

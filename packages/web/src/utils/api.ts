@@ -13,7 +13,9 @@ import type {
   User,
   UserStats,
   Settings,
-  DailyMemoStats
+  DailyMemoStats,
+  ApiToken,
+  CreateApiTokenRequest
 } from '@/types';
 
 // API基础配置
@@ -90,6 +92,24 @@ export const authApi = {
   // 刷新token
   refresh: async (): Promise<{ token: string }> => {
     const response = await api.post<ApiResponse<{ token: string }>>('/api/v1/auth/refresh');
+    return handleApiResponse(response);
+  },
+
+  // 创建API令牌
+  createToken: async (data: CreateApiTokenRequest): Promise<ApiToken> => {
+    const response = await api.post<ApiResponse<ApiToken>>('/api/v1/auth/tokens', data);
+    return handleApiResponse(response);
+  },
+
+  // 获取API令牌列表
+  getTokens: async (): Promise<ApiToken[]> => {
+    const response = await api.get<ApiResponse<ApiToken[]>>('/api/v1/auth/tokens');
+    return handleApiResponse(response);
+  },
+
+  // 删除API令牌
+  deleteToken: async (id: number): Promise<void> => {
+    const response = await api.delete<ApiResponse<void>>(`/api/v1/auth/tokens/${id}`);
     return handleApiResponse(response);
   },
 };

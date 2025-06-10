@@ -40,6 +40,25 @@ export function generateToken(user: User, secret: string): string {
   return jwt.sign(payload, secret);
 }
 
+// 生成API令牌（带JTI）
+export function generateApiToken(user: User, secret: string, tokenId: string, expiresAt?: number): string {
+  const payload: JWTPayload = {
+    userId: user.id,
+    username: user.username,
+    role: user.role,
+    iat: Math.floor(Date.now() / 1000),
+    exp: expiresAt || Math.floor(Date.now() / 1000) + (365 * 24 * 60 * 60), // 默认1年过期
+    jti: tokenId // JWT ID for revocation
+  };
+  
+  return jwt.sign(payload, secret);
+}
+
+// 生成随机令牌ID
+export function generateTokenId(): string {
+  return crypto.randomUUID();
+}
+
 // JWT令牌验证
 export function verifyToken(token: string, secret: string): JWTPayload | null {
   try {

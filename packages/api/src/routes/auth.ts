@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
-import { Env, LoginRequest, LoginResponse, User, UserWithPassword } from '../types';
-import { hashPassword, verifyPassword, generateToken, success, error } from '../utils';
+import { Env, LoginRequest, LoginResponse, User, UserWithPassword, CreateApiTokenRequest, ApiTokenResponse, ApiToken } from '../types';
+import { hashPassword, verifyPassword, generateToken, generateApiToken, generateTokenId, success, error } from '../utils';
 import { authMiddleware } from '../middleware';
 
 const auth = new Hono<{ Bindings: Env }>();
@@ -488,6 +488,105 @@ auth.post('/reset-db', async (c) => {
   } catch (err) {
     console.error('Database reset error:', err);
     return error('Database reset failed: ' + String(err), 500);
+  }
+});
+
+// 创建API令牌
+auth.post('/tokens', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user');
+    const body = await c.req.json() as CreateApiTokenRequest;
+    const { name, expires_at } = body;
+
+    if (!name || !name.trim()) {
+      return error('Token name is required', 400);
+    }
+
+    // 生成唯一的token ID
+    const tokenId = generateTokenId();
+    
+    // 生成JWT token
+    const token = generateApiToken(user, c.env.JWT_SECRET, tokenId, expires_at);
+
+    // 保存到数据库
+    const insertStmt = c.env.DB.prepare(
+      'INSERT INTO api_tokens (user_id, name, token_id, expires_at) VALUES (?, ?, ?, ?)'
+    );
+    
+    const result = await insertStmt.bind(user.id, name.trim(), tokenId, expires_at || null).run();
+    
+    if (!result.success) {
+      return error('Failed to create token', 500);
+    }
+
+    const response: ApiTokenResponse = {
+      id: result.meta.last_row_id,
+      name: name.trim(),
+      token: token, // 只在创建时返回完整token
+      token_id: tokenId,
+      created_at: Math.floor(Date.now() / 1000),
+      expires_at: expires_at
+    };
+
+    return c.json(success(response, 'API token created successfully'), 201);
+  } catch (err) {
+    console.error('Create token error:', err);
+    return error('Failed to create token', 500);
+  }
+});
+
+// 获取API令牌列表
+auth.get('/tokens', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user');
+    
+    const stmt = c.env.DB.prepare(
+      'SELECT id, name, token_id, created_at, expires_at, last_used_at FROM api_tokens WHERE user_id = ? ORDER BY created_at DESC'
+    );
+    
+    const result = await stmt.bind(user.id).all<ApiToken>();
+    
+    if (!result.success) {
+      return error('Failed to fetch tokens', 500);
+    }
+
+    return c.json(success(result.results || []));
+  } catch (err) {
+    console.error('Get tokens error:', err);
+    return error('Failed to fetch tokens', 500);
+  }
+});
+
+// 删除API令牌
+auth.delete('/tokens/:id', authMiddleware, async (c) => {
+  try {
+    const user = c.get('user');
+    const tokenId = parseInt(c.req.param('id'));
+
+    if (isNaN(tokenId)) {
+      return error('Invalid token ID', 400);
+    }
+
+    // 检查token是否属于当前用户
+    const checkStmt = c.env.DB.prepare('SELECT id FROM api_tokens WHERE id = ? AND user_id = ?');
+    const existing = await checkStmt.bind(tokenId, user.id).first();
+    
+    if (!existing) {
+      return error('Token not found', 404);
+    }
+
+    // 删除token
+    const deleteStmt = c.env.DB.prepare('DELETE FROM api_tokens WHERE id = ? AND user_id = ?');
+    const result = await deleteStmt.bind(tokenId, user.id).run();
+    
+    if (!result.success) {
+      return error('Failed to delete token', 500);
+    }
+
+    return c.json(success(null, 'Token deleted successfully'));
+  } catch (err) {
+    console.error('Delete token error:', err);
+    return error('Failed to delete token', 500);
   }
 });
 

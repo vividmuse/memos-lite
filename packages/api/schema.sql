@@ -17,6 +17,18 @@ CREATE TABLE IF NOT EXISTS user_settings (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+-- API令牌表
+CREATE TABLE IF NOT EXISTS api_tokens (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  token_id TEXT UNIQUE NOT NULL, -- JWT的jti claim
+  created_at INTEGER DEFAULT (strftime('%s', 'now')),
+  expires_at INTEGER, -- NULL表示永不过期
+  last_used_at INTEGER,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Memo表
 CREATE TABLE IF NOT EXISTS memos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -73,6 +85,8 @@ CREATE INDEX IF NOT EXISTS idx_comments_memo_id ON comments(memo_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON comments(parent_id);
 CREATE INDEX IF NOT EXISTS idx_memo_tags_memo_id ON memo_tags(memo_id);
 CREATE INDEX IF NOT EXISTS idx_memo_tags_tag_id ON memo_tags(tag_id);
+CREATE INDEX IF NOT EXISTS idx_api_tokens_user_id ON api_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_api_tokens_token_id ON api_tokens(token_id);
 
 -- 插入默认管理员用户 (admin/admin123)
 INSERT OR IGNORE INTO users (username, password_hash, role) 

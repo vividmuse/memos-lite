@@ -75,6 +75,21 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface ApiToken {
+  id: number;
+  name: string;
+  token?: string; // only returned when creating
+  token_id: string;
+  created_at: number;
+  expires_at?: number;
+  last_used_at?: number;
+}
+
+export interface CreateApiTokenRequest {
+  name: string;
+  expires_at?: number; // timestamp, undefined means never expire
+}
+
 // API响应类型
 export interface ApiResponse<T = any> {
   success: boolean;
