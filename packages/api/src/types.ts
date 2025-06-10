@@ -2,9 +2,13 @@
 export interface Env {
   DB: D1Database;
   JWT_SECRET: string;
-  CORS_ORIGIN: string;
+  CORS_ORIGIN?: string;
   R2_BUCKET?: R2Bucket;
   R2_PUBLIC_URL?: string;
+  R2_ACCOUNT_ID?: string;
+  R2_ACCESS_KEY_ID?: string;
+  R2_SECRET_ACCESS_KEY?: string;
+  R2_BUCKET_NAME?: string;
 }
 
 // 声明全局类型以支持Cloudflare Workers D1

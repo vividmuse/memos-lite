@@ -12,15 +12,16 @@
     "tail": "wrangler tail"
   },
   "dependencies": {
-    "hono": "^3.12.0",
+    "aws4fetch": "^1.0.20",
     "bcryptjs": "^2.4.3",
+    "hono": "^3.12.0",
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20231121.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.5",
-    "wrangler": "^3.19.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "wrangler": "^3.19.0"
   }
-} 
+}
