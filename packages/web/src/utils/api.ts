@@ -46,7 +46,7 @@ api.interceptors.request.use(
 
 // 响应拦截器 - 处理统一错误
 api.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
+  (response: AxiosResponse<any>) => {
     return response;
   },
   (error) => {
@@ -60,32 +60,38 @@ api.interceptors.response.use(
   }
 );
 
-// 工具函数：处理API响应
-const handleApiResponse = <T>(response: AxiosResponse<ApiResponse<T>>): T => {
-  if (response.data.success) {
-    return response.data.data as T;
-  } else {
-    throw new Error(response.data.error || 'API request failed');
+// 工具函数：处理API响应 - 兼容新旧两种格式
+const handleApiResponse = <T>(response: AxiosResponse<any>): T => {
+  // 检查是否是旧的包装格式 {success: true, data: {...}}
+  if (response.data && typeof response.data === 'object' && 'success' in response.data) {
+    if (response.data.success) {
+      return response.data.data as T;
+    } else {
+      throw new Error(response.data.error || 'API request failed');
+    }
   }
+  
+  // 新的直接格式：直接返回响应数据
+  return response.data as T;
 };
 
 // 认证相关API
 export const authApi = {
   // 登录
   login: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await api.post<ApiResponse<LoginResponse>>('/api/v1/auth/login', credentials);
+    const response = await api.post<any>('/api/v1/auth/login', credentials);
     return handleApiResponse(response);
   },
 
   // 注册
   register: async (credentials: LoginRequest): Promise<LoginResponse> => {
-    const response = await api.post<ApiResponse<LoginResponse>>('/api/v1/auth/register', credentials);
+    const response = await api.post<any>('/api/v1/auth/register', credentials);
     return handleApiResponse(response);
   },
 
   // 获取当前用户信息
   me: async (): Promise<User> => {
-    const response = await api.get<ApiResponse<User>>('/api/v1/auth/me');
+    const response = await api.get<any>('/api/v1/auth/me');
     return handleApiResponse(response);
   },
 
@@ -118,31 +124,31 @@ export const authApi = {
 export const memoApi = {
   // 获取memo列表
   getMemos: async (params?: MemosQueryParams): Promise<Memo[]> => {
-    const response = await api.get<ApiResponse<Memo[]>>('/api/v1/memos', { params });
+    const response = await api.get<any>('/api/v1/memos', { params });
     return handleApiResponse(response);
   },
 
   // 获取单个memo
   getMemo: async (id: number): Promise<Memo> => {
-    const response = await api.get<ApiResponse<Memo>>(`/api/v1/memos/${id}`);
+    const response = await api.get<any>(`/api/v1/memos/${id}`);
     return handleApiResponse(response);
   },
 
   // 创建memo
   createMemo: async (memo: CreateMemoRequest): Promise<Memo> => {
-    const response = await api.post<ApiResponse<Memo>>('/api/v1/memos', memo);
+    const response = await api.post<any>('/api/v1/memos', memo);
     return handleApiResponse(response);
   },
 
   // 更新memo
   updateMemo: async (id: number, memo: UpdateMemoRequest): Promise<Memo> => {
-    const response = await api.put<ApiResponse<Memo>>(`/api/v1/memos/${id}`, memo);
+    const response = await api.put<any>(`/api/v1/memos/${id}`, memo);
     return handleApiResponse(response);
   },
 
   // 删除memo
   deleteMemo: async (id: number): Promise<void> => {
-    const response = await api.delete<ApiResponse<null>>(`/api/v1/memos/${id}`);
+    const response = await api.delete<any>(`/api/v1/memos/${id}`);
     handleApiResponse(response);
   },
 

@@ -87,7 +87,8 @@ resources.post('/', authMiddleware, async (c) => {
       createdAt: getCurrentTimestamp()
     };
 
-    return c.json(success(resourceInfo, 'File uploaded successfully'), 201);
+    // 直接返回资源信息，兼容 MoeMemos 客户端
+    return c.json(resourceInfo, 201);
   } catch (err) {
     console.error('Upload file error:', err);
     return c.json(error('Failed to upload file', 500));
@@ -119,7 +120,8 @@ resources.get('/', authMiddleware, async (c) => {
       url: `${c.env.R2_PUBLIC_URL}/${resource.filename}`
     }));
 
-    return c.json(success(resources));
+    // 直接返回资源数组，兼容 MoeMemos 客户端
+    return c.json(resources);
   } catch (err) {
     console.error('Get resources error:', err);
     return c.json(error('Failed to get resources', 500));
@@ -146,7 +148,8 @@ resources.delete('/:id', authMiddleware, async (c) => {
     // 从数据库删除记录
     await c.env.DB.prepare('DELETE FROM resources WHERE id = ?').bind(id).run();
 
-    return c.json(success(null, 'File deleted successfully'));
+    // 返回空对象表示删除成功，兼容 MoeMemos 客户端
+    return c.json({});
   } catch (err) {
     console.error('Delete file error:', err);
     return c.json(error('Failed to delete file', 500));

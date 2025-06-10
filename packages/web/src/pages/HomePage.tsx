@@ -17,7 +17,8 @@ export default function HomePage() {
     setMemos, 
     setLoading: setMemosLoading,
     addMemo,
-    updateMemo
+    updateMemo,
+    removeMemo
   } = useMemoStore()
   
   const { setTags, setLoading: setTagsLoading } = useTagStore()
@@ -87,6 +88,22 @@ export default function HomePage() {
   const handleEditMemo = (memo: Memo) => {
     setEditingMemo(memo)
     setShowEditor(true)
+  }
+
+  const handleDeleteMemo = async (memoId: number) => {
+    if (!confirm('确定要删除这个备忘录吗？')) return
+    
+    try {
+      await memoApi.deleteMemo(memoId)
+      removeMemo(memoId)
+      // 重新加载备忘录列表以确保同步
+      setTimeout(() => {
+        loadMemos()
+      }, 100)
+    } catch (error) {
+      console.error('Failed to delete memo:', error)
+      alert('删除失败，请重试')
+    }
   }
 
   const handleRefresh = async () => {
@@ -178,6 +195,7 @@ export default function HomePage() {
                   key={memo.id} 
                   memo={memo}
                   onEdit={handleEditMemo}
+                  onDelete={handleDeleteMemo}
                 />
               ))
             )}

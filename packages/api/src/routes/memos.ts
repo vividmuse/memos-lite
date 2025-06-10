@@ -68,8 +68,8 @@ memos.get('/', optionalAuthMiddleware, async (c) => {
     
     const result = await c.env.DB.prepare(query).bind(...queryParams).all<Memo & { username: string }>();
     
-    // 返回格式与官方memos兼容
-    return c.json(success(result.results || []));
+    // 直接返回备忘录数组，兼容 MoeMemos 客户端
+    return c.json(result.results || []);
   } catch (err) {
     console.error('Get memos error:', err);
     return error('Failed to get memos', 500);
@@ -94,7 +94,8 @@ memos.get('/:id', optionalAuthMiddleware, async (c) => {
       return error('Access denied', 403);
     }
     
-    return c.json(success(memo));
+    // 直接返回备忘录对象，兼容 MoeMemos 客户端
+    return c.json(memo);
   } catch (err) {
     console.error('Get memo error:', err);
     return error('Failed to get memo', 500);
@@ -141,7 +142,8 @@ memos.post('/', authMiddleware, async (c) => {
     // 返回新创建的memo
     const newMemo = await c.env.DB.prepare('SELECT m.*, u.username FROM memos m JOIN users u ON m.user_id = u.id WHERE m.id = ?').bind(result.meta.last_row_id).first<Memo & { username: string }>();
     
-    return c.json(success(newMemo, 'Memo created'), 201);
+    // 直接返回新创建的备忘录，兼容 MoeMemos 客户端
+    return c.json(newMemo, 201);
   } catch (err) {
     console.error('Create memo error:', err);
     return error('Failed to create memo', 500);
@@ -198,7 +200,8 @@ memos.put('/:id', authMiddleware, async (c) => {
     // 返回更新后的memo
     const updatedMemo = await c.env.DB.prepare('SELECT m.*, u.username FROM memos m JOIN users u ON m.user_id = u.id WHERE m.id = ?').bind(id).first<Memo & { username: string }>();
     
-    return c.json(success(updatedMemo, 'Memo updated'));
+    // 直接返回更新后的备忘录，兼容 MoeMemos 客户端
+    return c.json(updatedMemo);
   } catch (err) {
     console.error('Update memo error:', err);
     return error('Failed to update memo', 500);
@@ -231,7 +234,8 @@ memos.delete('/:id', authMiddleware, async (c) => {
     // 删除memo
     await c.env.DB.prepare('DELETE FROM memos WHERE id = ?').bind(id).run();
     
-    return c.json(success(null, 'Memo deleted'));
+    // 返回空对象表示删除成功，兼容 MoeMemos 客户端
+    return c.json({});
   } catch (err) {
     console.error('Delete memo error:', err);
     return error('Failed to delete memo', 500);
