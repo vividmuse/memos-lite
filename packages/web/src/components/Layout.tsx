@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { 
   SearchIcon, 
   HomeIcon, 
@@ -10,9 +10,10 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   MenuIcon,
-  XIcon
+  XIcon,
+  LogOutIcon
 } from 'lucide-react'
-import { useAppStore, useTagStore, useMemoStore } from '@/store'
+import { useAppStore, useTagStore, useMemoStore, useAuthStore } from '@/store'
 import { tagApi } from '@/utils/api'
 
 const MONTHS = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月']
@@ -20,10 +21,12 @@ const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
 export default function Layout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { theme, setTheme } = useAppStore()
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light')
   const { tags, setTags } = useTagStore()
   const { memos, searchTerm, setSearchTerm, clearSearchTerm, selectedTags, addSelectedTag, removeSelectedTag, clearSelectedTags } = useMemoStore()
+  const { logout } = useAuthStore()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
@@ -264,7 +267,7 @@ export default function Layout() {
 
       {/* 底部导航 */}
       <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-5 gap-2">
           <Link
             to="/"
             onClick={closeMobileMenu}
@@ -304,6 +307,17 @@ export default function Layout() {
           >
             <SettingsIcon className="w-5 h-5" />
           </Link>
+          <button
+            onClick={() => {
+              logout()
+              navigate('/login')
+              closeMobileMenu()
+            }}
+            className="p-3 sm:p-2 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+            title="退出登录"
+          >
+            <LogOutIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </>
@@ -453,7 +467,7 @@ export default function Layout() {
 
               {/* 底部导航 */}
               <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                   <Link
                     to="/"
                     onClick={closeMobileMenu}
@@ -493,6 +507,17 @@ export default function Layout() {
                   >
                     <SettingsIcon className="w-6 h-6" />
                   </Link>
+                  <button
+                    onClick={() => {
+                      logout()
+                      navigate('/login')
+                      closeMobileMenu()
+                    }}
+                    className="p-4 rounded-lg flex items-center justify-center text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    title="退出登录"
+                  >
+                    <LogOutIcon className="w-6 h-6" />
+                  </button>
                 </div>
               </div>
             </div>

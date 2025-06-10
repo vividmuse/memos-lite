@@ -18,10 +18,12 @@ import {
 import { settingsApi, authApi } from '@/utils/api'
 import { useAppStore, useAuthStore } from '@/store'
 import { Settings, User, ApiToken, CreateApiTokenRequest } from '@/types'
+import { useNavigate } from 'react-router-dom'
 
 export default function SettingsPage() {
   const { settings, setSettings } = useAppStore()
-  const { user: currentUser } = useAuthStore()
+  const { user: currentUser, logout } = useAuthStore()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -305,6 +307,13 @@ export default function SettingsPage() {
     }
   }
 
+  const handleLogout = () => {
+    if (confirm('确定要退出登录吗？')) {
+      logout()
+      navigate('/login')
+    }
+  }
+
   const weekDayOptions = [
     { value: 0, label: '周日' },
     { value: 1, label: '周一' },
@@ -326,6 +335,7 @@ export default function SettingsPage() {
   const tabs = [
     { id: 'basic', label: '基础', icon: SettingsIcon },
     { id: 'appearance', label: '外观', icon: PaletteIcon },
+    { id: 'account', label: '账户', icon: UserPlusIcon },
     { id: 'users', label: '用户', icon: UsersIcon },
     { id: 'api', label: 'API', icon: KeyIcon },
     { id: 'about', label: '关于', icon: InfoIcon }
@@ -656,6 +666,58 @@ export default function SettingsPage() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 账户管理 */}
+      {activeTab === 'account' && (
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">账户管理</h2>
+          
+          <div className="space-y-6">
+            {/* 当前用户信息 */}
+            <div>
+              <h3 className="text-base font-medium text-gray-900 dark:text-white mb-3">当前用户</h3>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white font-medium text-lg">
+                      {currentUser?.username?.charAt(0).toUpperCase() || 'U'}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {currentUser?.username || '未知用户'}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {currentUser?.role === 'ADMIN' ? '管理员' : '普通用户'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 退出登录 */}
+            <div>
+              <h3 className="text-base font-medium text-gray-900 dark:text-white mb-3">账户操作</h3>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <div>
+                    <div className="font-medium text-red-900 dark:text-red-200">退出登录</div>
+                    <div className="text-sm text-red-700 dark:text-red-300">
+                      注销当前账户，返回登录页面
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    退出登录
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
