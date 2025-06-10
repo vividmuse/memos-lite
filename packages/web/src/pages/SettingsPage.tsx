@@ -825,7 +825,7 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div>
               <div className="text-sm font-medium text-gray-700 dark:text-gray-300">版本</div>
-              <div className="text-gray-900 dark:text-white">v0.24.4</div>
+              <div className="text-gray-900 dark:text-white">v0.24.0</div>
             </div>
             
             <div>
