@@ -12,6 +12,7 @@ import SettingsPage from '@/pages/SettingsPage'
 import UserProfilePage from '@/pages/UserProfilePage'
 import CalendarPage from '@/pages/CalendarPage'
 import TagsPage from '@/pages/TagsPage'
+import ArchivedPage from '@/pages/ArchivedPage'
 
 // 保护路由组件
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -112,6 +113,7 @@ function App() {
           {/* 嵌套路由 */}
           <Route index element={<HomePage />} />
           <Route path="memo/:id" element={<MemoDetailPage />} />
+          <Route path="archived" element={<ArchivedPage />} />
           <Route path="calendar" element={<CalendarPage />} />
           <Route path="tags" element={<TagsPage />} />
           <Route path="tags/:tagName" element={<TagsPage />} />

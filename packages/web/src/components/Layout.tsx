@@ -7,7 +7,8 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   PlusIcon,
-  SearchIcon
+  SearchIcon,
+  ArchiveIcon
 } from 'lucide-react'
 import { useAppStore, useTagStore, useMemoStore } from '@/store'
 import { tagApi } from '@/utils/api'
@@ -194,7 +195,7 @@ export default function Layout() {
 
         {/* 底部导航 */}
         <div className="p-3 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
+          <div className="grid grid-cols-4 gap-2">
             <Link
               to="/"
               className={`p-2 rounded-lg flex items-center justify-center ${
@@ -204,6 +205,16 @@ export default function Layout() {
               }`}
             >
               <HomeIcon className="w-5 h-5" />
+            </Link>
+            <Link
+              to="/archived"
+              className={`p-2 rounded-lg flex items-center justify-center ${
+                location.pathname === '/archived' 
+                  ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' 
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              <ArchiveIcon className="w-5 h-5" />
             </Link>
             <button
               onClick={toggleTheme}

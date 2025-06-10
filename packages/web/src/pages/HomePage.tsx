@@ -28,7 +28,8 @@ export default function HomePage() {
     setMemosLoading(true)
     try {
       const params = {
-        limit: 50
+        limit: 50,
+        state: 'NORMAL' as const // 默认只显示正常状态的备忘录，不显示归档的
       }
       
       console.log('Loading memos with params:', params)
