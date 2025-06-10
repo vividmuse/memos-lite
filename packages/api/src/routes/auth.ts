@@ -502,6 +502,20 @@ auth.post('/tokens', authMiddleware, async (c) => {
       return error('Token name is required', 400);
     }
 
+    // 确保api_tokens表存在
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS api_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        token_id TEXT UNIQUE NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        expires_at INTEGER,
+        last_used_at INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `).run();
+
     // 生成唯一的token ID
     const tokenId = generateTokenId();
     
@@ -539,6 +553,20 @@ auth.post('/tokens', authMiddleware, async (c) => {
 auth.get('/tokens', authMiddleware, async (c) => {
   try {
     const user = c.get('user');
+    
+    // 确保api_tokens表存在
+    await c.env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS api_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        token_id TEXT UNIQUE NOT NULL,
+        created_at INTEGER DEFAULT (strftime('%s', 'now')),
+        expires_at INTEGER,
+        last_used_at INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `).run();
     
     const stmt = c.env.DB.prepare(
       'SELECT id, name, token_id, created_at, expires_at, last_used_at FROM api_tokens WHERE user_id = ? ORDER BY created_at DESC'
