@@ -21,15 +21,39 @@ interface MemoEditorProps {
 }
 
 export default function MemoEditor({ onClose, onSave, editingMemo }: MemoEditorProps) {
-  const [content, setContent] = useState(editingMemo?.content || '')
-  const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE'>(editingMemo?.visibility || 'PRIVATE')
-  const [pinned, setPinned] = useState(editingMemo?.pinned === 1 || false)
-  const [tags, setTags] = useState(editingMemo?.tags?.map((t: { name: string }) => t.name).join(', ') || '')
+  const [content, setContent] = useState('')
+  const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE'>('PRIVATE')
+  const [pinned, setPinned] = useState(false)
+  const [tags, setTags] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [showPreview, setShowPreview] = useState(false)
   const [splitView, setSplitView] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // 当editingMemo变化时，初始化表单数据
+  useEffect(() => {
+    if (editingMemo) {
+      setContent(editingMemo.content || '')
+      setVisibility(editingMemo.visibility || 'PRIVATE')
+      setPinned(editingMemo.pinned === 1 || editingMemo.pinned === true)
+      
+      // 从内容中提取标签
+      const tagRegex = /#([a-zA-Z0-9\u4e00-\u9fa5_-]+)/g
+      const extractedTags = []
+      let match
+      while ((match = tagRegex.exec(editingMemo.content || '')) !== null) {
+        extractedTags.push(match[1])
+      }
+      setTags(extractedTags.join(', '))
+    } else {
+      // 重置为新建状态
+      setContent('')
+      setVisibility('PRIVATE')
+      setPinned(false)
+      setTags('')
+    }
+  }, [editingMemo])
 
   // 处理快捷键
   useEffect(() => {

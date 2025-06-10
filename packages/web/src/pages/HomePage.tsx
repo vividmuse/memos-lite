@@ -9,13 +9,15 @@ import MemoEditor from '@/components/MemoEditor'
 export default function HomePage() {
   const [showEditor, setShowEditor] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  const [editingMemo, setEditingMemo] = useState<Memo | null>(null)
 
   const { 
     memos, 
     loading: memosLoading, 
     setMemos, 
     setLoading: setMemosLoading,
-    addMemo 
+    addMemo,
+    updateMemo
   } = useMemoStore()
   
   const { setTags, setLoading: setTagsLoading } = useTagStore()
@@ -61,12 +63,30 @@ export default function HomePage() {
   const handleMemoCreated = (memo: Memo) => {
     addMemo(memo)
     setShowEditor(false)
+    setEditingMemo(null)
     // 重新加载标签，因为可能有新标签
     loadTags()
     // 强制重新加载备忘录列表以确保同步
     setTimeout(() => {
       loadMemos()
     }, 100)
+  }
+
+  const handleMemoUpdated = (memo: Memo) => {
+    updateMemo(memo.id, memo)
+    setShowEditor(false)
+    setEditingMemo(null)
+    // 重新加载标签，因为可能有新标签
+    loadTags()
+    // 强制重新加载备忘录列表以确保同步
+    setTimeout(() => {
+      loadMemos()
+    }, 100)
+  }
+
+  const handleEditMemo = (memo: Memo) => {
+    setEditingMemo(memo)
+    setShowEditor(true)
   }
 
   const handleRefresh = async () => {
@@ -76,6 +96,11 @@ export default function HomePage() {
     setRefreshing(false)
   }
 
+  const handleCloseEditor = () => {
+    setShowEditor(false)
+    setEditingMemo(null)
+  }
+
   return (
     <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* 顶部编辑器区域 */}
@@ -83,8 +108,9 @@ export default function HomePage() {
         {showEditor ? (
           <div className="p-4">
             <MemoEditor 
-              onClose={() => setShowEditor(false)} 
-              onSave={handleMemoCreated}
+              onClose={handleCloseEditor} 
+              onSave={editingMemo ? handleMemoUpdated : handleMemoCreated}
+              editingMemo={editingMemo}
             />
           </div>
         ) : (
@@ -151,10 +177,7 @@ export default function HomePage() {
                 <MemoCard 
                   key={memo.id} 
                   memo={memo}
-                  onEdit={(editMemo) => {
-                    // TODO: 实现编辑功能
-                    console.log('Edit memo:', editMemo)
-                  }}
+                  onEdit={handleEditMemo}
                 />
               ))
             )}
