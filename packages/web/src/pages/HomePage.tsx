@@ -171,39 +171,42 @@ export default function HomePage() {
           <div className="flex-1 overflow-y-auto">
             <div className="p-4">
               {/* 头部 */}
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  备忘录
-                  {memos.length > 0 && (
-                    <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                      ({memos.length}{searchTerm.trim() && ' 搜索结果'})
-                    </span>
-                  )}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    备忘录
+                    {memos.length > 0 && (
+                      <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                        ({memos.length}{searchTerm.trim() && ' 搜索结果'})
+                      </span>
+                    )}
+                  </h2>
                   {searchTerm.trim() && (
-                    <span className="ml-2 text-sm text-blue-600 dark:text-blue-400">
+                    <div className="mt-1 text-sm text-blue-600 dark:text-blue-400">
                       搜索: "{searchTerm.trim()}"
-                    </span>
+                    </div>
                   )}
                   {selectedTags.length > 0 && (
-                    <span className="ml-2 text-sm text-green-600 dark:text-green-400">
+                    <div className="mt-1 text-sm text-green-600 dark:text-green-400">
                       标签: {selectedTags.map(tag => `#${tag}`).join(', ')}
-                    </span>
+                    </div>
                   )}
-                </h2>
+                </div>
                 <div className="flex space-x-2">
                   <button
                     onClick={handleRefresh}
                     disabled={refreshing}
-                    className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50"
+                    className="p-3 sm:p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
-                    <RefreshCwIcon className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+                    <RefreshCwIcon className={`w-5 h-5 sm:w-4 sm:h-4 ${refreshing ? 'animate-spin' : ''}`} />
                   </button>
                   <button
                     onClick={() => setShowEditor(true)}
-                    className="flex items-center space-x-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    className="flex items-center space-x-2 px-4 py-3 sm:px-3 sm:py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                   >
-                    <PlusIcon className="w-4 h-4" />
-                    <span>新建</span>
+                    <PlusIcon className="w-5 h-5 sm:w-4 sm:h-4" />
+                    <span className="hidden sm:inline">新建</span>
+                    <span className="sm:hidden">写</span>
                   </button>
                 </div>
               </div>

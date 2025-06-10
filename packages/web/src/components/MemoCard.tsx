@@ -68,27 +68,33 @@ export default function MemoCard({ memo, onEdit, onDelete, onArchive }: MemoCard
   const tags = extractTags(memo.content)
 
   return (
-    <div className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow ${
+    <div className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-4 hover:shadow-md transition-shadow ${
       memo.state === 'ARCHIVED' ? 'opacity-75 bg-gray-50 dark:bg-gray-900' : ''
     }`}>
       {/* 头部：用户信息和时间 */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+        <div className="flex items-center space-x-2 min-w-0 flex-1">
+          <div className="w-7 h-7 sm:w-6 sm:h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
             <span className="text-white text-xs font-semibold">
               {memo.username?.charAt(0).toUpperCase() || 'U'}
             </span>
           </div>
-          <span className="text-sm font-medium text-gray-900 dark:text-white">
-            {memo.username || '未知用户'}
-          </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">·</span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {formatTime(memo.created_at)}
-          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2">
+              <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {memo.username || '未知用户'}
+              </span>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">·</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatTime(memo.created_at)}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 sm:space-x-1 flex-shrink-0">
           {/* 可见性图标 */}
           {memo.visibility === 'PRIVATE' ? (
             <LockIcon className="w-4 h-4 text-gray-400" />
@@ -105,23 +111,23 @@ export default function MemoCard({ memo, onEdit, onDelete, onArchive }: MemoCard
           <div className="relative">
             <button
               onClick={() => setShowActions(!showActions)}
-              className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 sm:p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <MoreHorizontalIcon className="w-4 h-4 text-gray-400" />
+              <MoreHorizontalIcon className="w-5 h-5 sm:w-4 sm:h-4 text-gray-400" />
             </button>
 
             {showActions && (
-              <div className="absolute right-0 top-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
+              <div className="absolute right-0 top-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-10 min-w-[140px]">
                 <button
                   onClick={() => onEdit?.(memo)}
-                  className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex items-center space-x-2 px-3 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <EditIcon className="w-4 h-4" />
                   <span>编辑</span>
                 </button>
                 <button
                   onClick={handleCopy}
-                  className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="w-full flex items-center space-x-2 px-3 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
                   <CopyIcon className="w-4 h-4" />
                   <span>复制</span>
@@ -129,7 +135,7 @@ export default function MemoCard({ memo, onEdit, onDelete, onArchive }: MemoCard
                 {onArchive && (
                   <button
                     onClick={() => onArchive(memo.id, memo.state !== 'ARCHIVED')}
-                    className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="w-full flex items-center space-x-2 px-3 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     {memo.state === 'ARCHIVED' ? (
                       <>
@@ -147,7 +153,7 @@ export default function MemoCard({ memo, onEdit, onDelete, onArchive }: MemoCard
                 {onDelete && (
                   <button
                     onClick={() => onDelete(memo.id)}
-                    className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="w-full flex items-center space-x-2 px-3 py-3 sm:py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <span>删除</span>
                   </button>
@@ -164,13 +170,13 @@ export default function MemoCard({ memo, onEdit, onDelete, onArchive }: MemoCard
       </div>
 
       {/* 底部：标签和操作 */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center flex-wrap gap-1">
           {tags.map((tag, index) => (
             <Link
               key={index}
               to={`/tags/${encodeURIComponent(tag)}`}
-              className="inline-flex items-center space-x-1 px-2 py-1 text-xs bg-blue-50 dark:bg-blue-900/30 
+              className="inline-flex items-center space-x-1 px-2 py-1.5 sm:py-1 text-xs bg-blue-50 dark:bg-blue-900/30 
                        text-blue-600 dark:text-blue-400 rounded hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
             >
               <HashIcon className="w-3 h-3" />

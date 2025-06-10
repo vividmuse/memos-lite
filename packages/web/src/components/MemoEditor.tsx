@@ -189,23 +189,23 @@ export default function MemoEditor({ onClose, onSave, editingMemo }: MemoEditorP
   ]
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card border border-border rounded-lg w-full max-w-6xl max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-card border border-border rounded-lg w-full max-w-6xl max-h-[95vh] sm:max-h-[90vh] flex flex-col">
         {/* 头部 */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 border-b border-border gap-3 sm:gap-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <h2 className="text-lg font-semibold">
               {editingMemo ? '编辑备忘录' : '创建备忘录'}
             </h2>
             
             {/* 视图切换 */}
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 sm:space-x-2">
               <button
                 onClick={() => {
                   setShowPreview(false)
                   setSplitView(false)
                 }}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
+                className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
                   !showPreview && !splitView 
                     ? 'bg-primary text-primary-foreground' 
                     : 'hover:bg-accent'
@@ -218,7 +218,7 @@ export default function MemoEditor({ onClose, onSave, editingMemo }: MemoEditorP
                   setShowPreview(false)
                   setSplitView(true)
                 }}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
+                className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-colors hidden sm:inline-block ${
                   splitView 
                     ? 'bg-primary text-primary-foreground' 
                     : 'hover:bg-accent'
@@ -231,7 +231,7 @@ export default function MemoEditor({ onClose, onSave, editingMemo }: MemoEditorP
                   setShowPreview(true)
                   setSplitView(false)
                 }}
-                className={`px-3 py-1 text-sm rounded transition-colors ${
+                className={`px-2 sm:px-3 py-1 text-xs sm:text-sm rounded transition-colors ${
                   showPreview && !splitView 
                     ? 'bg-primary text-primary-foreground' 
                     : 'hover:bg-accent'
@@ -244,16 +244,16 @@ export default function MemoEditor({ onClose, onSave, editingMemo }: MemoEditorP
 
           <button
             onClick={onClose}
-            className="p-2 rounded-md hover:bg-accent transition-colors"
+            className="p-2 rounded-md hover:bg-accent transition-colors self-start sm:self-auto"
           >
-            <XIcon className="w-4 h-4" />
+            <XIcon className="w-5 h-5 sm:w-4 sm:h-4" />
           </button>
         </div>
 
         {/* 工具栏 */}
         {!showPreview && (
           <div className="p-2 border-b border-border">
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-1 overflow-x-auto">
               {toolbarActions.map((tool, index) => {
                 const Icon = tool.icon
                 return (
@@ -261,31 +261,31 @@ export default function MemoEditor({ onClose, onSave, editingMemo }: MemoEditorP
                     key={index}
                     onClick={tool.action}
                     title={tool.title}
-                    className="p-2 rounded hover:bg-accent transition-colors"
+                    className="p-2 sm:p-2 rounded hover:bg-accent transition-colors flex-shrink-0"
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="w-5 h-5 sm:w-4 sm:h-4" />
                   </button>
                 )
               })}
               
-              <div className="w-px h-6 bg-border mx-2" />
+              <div className="w-px h-6 bg-border mx-2 flex-shrink-0" />
               
               <button
                 onClick={() => window.open('https://www.markdownguide.org/basic-syntax/', '_blank')}
-                className="p-2 rounded hover:bg-accent transition-colors"
+                className="p-2 sm:p-2 rounded hover:bg-accent transition-colors flex-shrink-0"
                 title="Markdown 语法帮助"
               >
-                <HelpCircleIcon className="w-4 h-4" />
+                <HelpCircleIcon className="w-5 h-5 sm:w-4 sm:h-4" />
               </button>
             </div>
           </div>
         )}
 
         {/* 内容区 */}
-        <div className="flex-1 overflow-hidden flex">
+        <div className="flex-1 overflow-hidden flex flex-col sm:flex-row">
           {/* 编辑器 */}
           {(!showPreview || splitView) && (
-            <div className={`${splitView ? 'w-1/2 border-r border-border' : 'w-full'} flex flex-col p-4`}>
+            <div className={`${splitView ? 'sm:w-1/2 sm:border-r border-border' : 'w-full'} flex flex-col p-3 sm:p-4 ${showPreview && splitView ? 'hidden sm:flex' : ''}`}>
               <label className="block text-sm font-medium text-foreground mb-2">
                 内容 
                 <span className="text-xs text-muted-foreground ml-2">
@@ -313,18 +313,18 @@ Ctrl+B 粗体
 Ctrl+I 斜体
 Ctrl+K 插入链接"
                 className="flex-1 p-3 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none font-mono text-sm leading-relaxed"
-                style={{ minHeight: '400px' }}
+                style={{ minHeight: '300px' }}
               />
             </div>
           )}
 
           {/* 预览区 */}
           {(showPreview || splitView) && (
-            <div className={`${splitView ? 'w-1/2' : 'w-full'} flex flex-col p-4`}>
+            <div className={`${splitView ? 'sm:w-1/2' : 'w-full'} flex flex-col p-3 sm:p-4 ${!showPreview && splitView ? 'hidden sm:flex' : ''}`}>
               <label className="block text-sm font-medium text-foreground mb-2">
                 预览
               </label>
-              <div className="flex-1 border border-input rounded-md bg-background overflow-y-auto">
+              <div className="flex-1 border border-input rounded-md bg-background overflow-y-auto" style={{ minHeight: '300px' }}>
                 <MarkdownPreview content={content} />
               </div>
             </div>
@@ -332,9 +332,9 @@ Ctrl+K 插入链接"
         </div>
 
         {/* 设置和操作区 */}
-        <div className="p-4 border-t border-border space-y-4">
+        <div className="p-3 sm:p-4 border-t border-border space-y-4">
           {/* 设置选项 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* 可见性 */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
@@ -343,7 +343,7 @@ Ctrl+K 插入链接"
               <select
                 value={visibility}
                 onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'PRIVATE')}
-                className="w-full p-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="w-full p-3 sm:p-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="PRIVATE">私有</option>
                 <option value="PUBLIC">公开</option>
@@ -352,63 +352,60 @@ Ctrl+K 插入链接"
 
             {/* 置顶 */}
             <div>
-              <label className="flex items-center space-x-2 pt-6">
+              <label className="flex items-center space-x-2 pt-3 sm:pt-6">
                 <input
                   type="checkbox"
                   checked={pinned}
                   onChange={(e) => setPinned(e.target.checked)}
-                  className="rounded border-border"
+                  className="w-4 h-4 text-primary focus:ring-primary border-border rounded"
                 />
-                <span className="text-sm font-medium text-foreground">置顶</span>
+                <span className="text-sm text-foreground">置顶备忘录</span>
               </label>
             </div>
 
             {/* 标签 */}
-            <div>
+            <div className="sm:col-span-2 lg:col-span-1">
               <label className="block text-sm font-medium text-foreground mb-2">
-                标签 (用逗号分隔)
+                标签 
+                <span className="text-xs text-muted-foreground ml-1">
+                  (用逗号分隔)
+                </span>
               </label>
               <input
                 type="text"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
-                placeholder="标签1, 标签2, 标签3"
-                className="w-full p-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="标签1, 标签2"
+                className="w-full p-3 sm:p-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
               />
-              <p className="text-xs text-muted-foreground mt-1">
-                使用 #标签名 也可以在内容中添加标签
-              </p>
             </div>
           </div>
 
           {/* 错误信息 */}
           {error && (
-            <div className="p-3 rounded-md bg-destructive/10 border border-destructive/20">
-              <p className="text-sm text-destructive">{error}</p>
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-destructive text-sm">
+              {error}
             </div>
           )}
 
-          {/* 底部操作 */}
-          <div className="flex justify-between items-center">
-            <div className="text-xs text-muted-foreground">
-              字数: {content.length} | 行数: {content.split('\n').length}
-            </div>
-            
-            <div className="flex gap-2">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 border border-border rounded-md hover:bg-accent transition-colors"
-              >
-                取消
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={loading}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {loading ? '保存中...' : '保存'} <span className="text-xs opacity-70">(Ctrl+S)</span>
-              </button>
-            </div>
+          {/* 操作按钮 */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:justify-end sm:space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="px-6 py-3 sm:py-2 border border-border rounded-md hover:bg-accent transition-colors disabled:opacity-50"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={loading || !content.trim()}
+              className="px-6 py-3 sm:py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? '保存中...' : (editingMemo ? '更新' : '创建')}
+            </button>
           </div>
         </div>
       </div>
