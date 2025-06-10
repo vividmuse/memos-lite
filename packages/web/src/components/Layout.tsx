@@ -21,9 +21,8 @@ export default function Layout() {
   const { theme, setTheme } = useAppStore()
   const toggleTheme = () => setTheme(theme === 'light' ? 'dark' : 'light')
   const { tags, setTags } = useTagStore()
-  const { memos } = useMemoStore()
+  const { memos, searchTerm, setSearchTerm } = useMemoStore()
   const [currentDate, setCurrentDate] = useState(new Date())
-  const [searchTerm, setSearchTerm] = useState('')
 
   // 加载标签
   useEffect(() => {

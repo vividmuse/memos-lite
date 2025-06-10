@@ -5,6 +5,7 @@ import { useMemoStore, useTagStore } from '@/store'
 import { Memo } from '@/types'
 import MemoCard from '@/components/MemoCard'
 import MemoEditor from '@/components/MemoEditor'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export default function HomePage() {
   const [showEditor, setShowEditor] = useState(false)
@@ -18,18 +19,27 @@ export default function HomePage() {
     setLoading: setMemosLoading,
     addMemo,
     updateMemo,
-    removeMemo
+    removeMemo,
+    searchTerm
   } = useMemoStore()
   
   const { setTags, setLoading: setTagsLoading } = useTagStore()
 
+  // 使用 debounce 优化搜索性能
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
+
   // 使用 useCallback 避免无限循环
-  const loadMemos = useCallback(async () => {
+  const loadMemos = useCallback(async (search?: string) => {
     setMemosLoading(true)
     try {
-      const params = {
+      const params: any = {
         limit: 50,
         state: 'NORMAL' as const // 默认只显示正常状态的备忘录，不显示归档的
+      }
+      
+      // 如果有搜索词，添加到参数中
+      if (search && search.trim()) {
+        params.search = search.trim()
       }
       
       console.log('Loading memos with params:', params)
@@ -62,6 +72,11 @@ export default function HomePage() {
     loadTags()
   }, [loadMemos, loadTags])
 
+  // 监听搜索词变化
+  useEffect(() => {
+    loadMemos(debouncedSearchTerm)
+  }, [debouncedSearchTerm, loadMemos])
+
   const handleMemoCreated = (memo: Memo) => {
     addMemo(memo)
     setShowEditor(false)
@@ -70,7 +85,7 @@ export default function HomePage() {
     loadTags()
     // 强制重新加载备忘录列表以确保同步
     setTimeout(() => {
-      loadMemos()
+      loadMemos(debouncedSearchTerm)
     }, 100)
   }
 
@@ -82,7 +97,7 @@ export default function HomePage() {
     loadTags()
     // 强制重新加载备忘录列表以确保同步
     setTimeout(() => {
-      loadMemos()
+      loadMemos(debouncedSearchTerm)
     }, 100)
   }
 
@@ -99,7 +114,7 @@ export default function HomePage() {
       removeMemo(memoId)
       // 重新加载备忘录列表以确保同步
       setTimeout(() => {
-        loadMemos()
+        loadMemos(debouncedSearchTerm)
       }, 100)
     } catch (error) {
       console.error('Failed to delete memo:', error)
@@ -118,7 +133,7 @@ export default function HomePage() {
       
       // 重新加载备忘录列表以确保同步
       setTimeout(() => {
-        loadMemos()
+        loadMemos(debouncedSearchTerm)
       }, 100)
     } catch (error) {
       console.error('Failed to archive memo:', error)
@@ -128,7 +143,7 @@ export default function HomePage() {
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    await loadMemos()
+    await loadMemos(debouncedSearchTerm)
     await loadTags()
     setRefreshing(false)
   }
@@ -174,7 +189,12 @@ export default function HomePage() {
               备忘录
               {memos.length > 0 && (
                 <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                  ({memos.length})
+                  ({memos.length}{searchTerm.trim() && ' 搜索结果'})
+                </span>
+              )}
+              {searchTerm.trim() && (
+                <span className="ml-2 text-sm text-blue-600 dark:text-blue-400">
+                  搜索: "{searchTerm.trim()}"
                 </span>
               )}
             </h2>

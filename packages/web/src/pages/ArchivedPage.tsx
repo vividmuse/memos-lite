@@ -3,19 +3,29 @@ import { ArchiveIcon, RefreshCwIcon } from 'lucide-react'
 import { memoApi } from '@/utils/api'
 import { Memo } from '@/types'
 import MemoCard from '@/components/MemoCard'
+import { useMemoStore } from '@/store'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export default function ArchivedPage() {
   const [memos, setMemos] = useState<Memo[]>([])
   const [loading, setLoading] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
+  
+  const { searchTerm } = useMemoStore()
+  const debouncedSearchTerm = useDebounce(searchTerm, 300)
 
   // 加载归档的备忘录
-  const loadArchivedMemos = useCallback(async () => {
+  const loadArchivedMemos = useCallback(async (search?: string) => {
     setLoading(true)
     try {
-      const params = {
+      const params: any = {
         limit: 100,
         state: 'ARCHIVED' as const
+      }
+      
+      // 如果有搜索词，添加到参数中
+      if (search && search.trim()) {
+        params.search = search.trim()
       }
       
       console.log('Loading archived memos with params:', params)
@@ -34,6 +44,11 @@ export default function ArchivedPage() {
     loadArchivedMemos()
   }, [loadArchivedMemos])
 
+  // 监听搜索词变化
+  useEffect(() => {
+    loadArchivedMemos(debouncedSearchTerm)
+  }, [debouncedSearchTerm, loadArchivedMemos])
+
   const handleUnarchiveMemo = async (memoId: number) => {
     try {
       await memoApi.updateMemo(memoId, {
@@ -42,7 +57,7 @@ export default function ArchivedPage() {
       
       // 重新加载归档列表
       setTimeout(() => {
-        loadArchivedMemos()
+        loadArchivedMemos(debouncedSearchTerm)
       }, 100)
     } catch (error) {
       console.error('Failed to unarchive memo:', error)
@@ -57,7 +72,7 @@ export default function ArchivedPage() {
       await memoApi.deleteMemo(memoId)
       // 重新加载归档列表
       setTimeout(() => {
-        loadArchivedMemos()
+        loadArchivedMemos(debouncedSearchTerm)
       }, 100)
     } catch (error) {
       console.error('Failed to delete memo:', error)
@@ -67,7 +82,7 @@ export default function ArchivedPage() {
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    await loadArchivedMemos()
+    await loadArchivedMemos(debouncedSearchTerm)
     setRefreshing(false)
   }
 
