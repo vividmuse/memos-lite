@@ -646,4 +646,32 @@ auth.delete('/tokens/:id', authMiddleware, async (c) => {
   }
 });
 
+// 数据库迁移：添加 state 字段到 memos 表
+auth.post('/migrate-add-state', async (c) => {
+  try {
+    // 检查 state 列是否已经存在
+    const tableInfo = await c.env.DB.prepare('PRAGMA table_info(memos)').all();
+    const hasStateColumn = tableInfo.results?.some((col: any) => col.name === 'state');
+    
+    if (!hasStateColumn) {
+      // 添加 state 列
+      await c.env.DB.prepare(`
+        ALTER TABLE memos ADD COLUMN state TEXT CHECK (state IN ('NORMAL', 'ARCHIVED')) DEFAULT 'NORMAL'
+      `).run();
+      
+      // 创建 state 字段的索引
+      await c.env.DB.prepare(`
+        CREATE INDEX IF NOT EXISTS idx_memos_state ON memos(state)
+      `).run();
+      
+      return c.json(success(null, 'State column added successfully'));
+    } else {
+      return c.json(success(null, 'State column already exists'));
+    }
+  } catch (err) {
+    console.error('Migration error:', err);
+    return error('Migration failed', 500);
+  }
+});
+
 export default auth; 

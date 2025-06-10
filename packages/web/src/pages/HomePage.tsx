@@ -106,6 +106,25 @@ export default function HomePage() {
     }
   }
 
+  const handleArchiveMemo = async (memoId: number, archived: boolean) => {
+    try {
+      const memo = memos.find(m => m.id === memoId)
+      if (!memo) return
+
+      await memoApi.updateMemo(memoId, {
+        state: archived ? 'ARCHIVED' : 'NORMAL'
+      })
+      
+      // 重新加载备忘录列表以确保同步
+      setTimeout(() => {
+        loadMemos()
+      }, 100)
+    } catch (error) {
+      console.error('Failed to archive memo:', error)
+      alert('归档操作失败，请重试')
+    }
+  }
+
   const handleRefresh = async () => {
     setRefreshing(true)
     await loadMemos()
@@ -196,6 +215,7 @@ export default function HomePage() {
                   memo={memo}
                   onEdit={handleEditMemo}
                   onDelete={handleDeleteMemo}
+                  onArchive={handleArchiveMemo}
                 />
               ))
             )}

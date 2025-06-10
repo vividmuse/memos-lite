@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS memos (
   content TEXT NOT NULL,
   visibility TEXT CHECK (visibility IN ('PUBLIC','PRIVATE')) DEFAULT 'PRIVATE',
   pinned INTEGER DEFAULT 0,
+  state TEXT CHECK (state IN ('NORMAL', 'ARCHIVED')) DEFAULT 'NORMAL',
   created_at INTEGER DEFAULT (strftime('%s', 'now')),
   updated_at INTEGER DEFAULT (strftime('%s', 'now')),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -81,6 +82,7 @@ CREATE TABLE IF NOT EXISTS settings (
 CREATE INDEX IF NOT EXISTS idx_memos_user_id ON memos(user_id);
 CREATE INDEX IF NOT EXISTS idx_memos_created_at ON memos(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_memos_visibility ON memos(visibility);
+CREATE INDEX IF NOT EXISTS idx_memos_state ON memos(state);
 CREATE INDEX IF NOT EXISTS idx_comments_memo_id ON comments(memo_id);
 CREATE INDEX IF NOT EXISTS idx_comments_parent_id ON comments(parent_id);
 CREATE INDEX IF NOT EXISTS idx_memo_tags_memo_id ON memo_tags(memo_id);

@@ -8,7 +8,9 @@ import {
   CopyIcon,
   EditIcon,
   MoreHorizontalIcon,
-  HashIcon
+  HashIcon,
+  ArchiveIcon,
+  ArchiveRestoreIcon
 } from 'lucide-react'
 import MarkdownPreview from './MarkdownPreview'
 
@@ -16,9 +18,10 @@ interface MemoCardProps {
   memo: any
   onEdit?: (memo: any) => void
   onDelete?: (id: number) => void
+  onArchive?: (id: number, archived: boolean) => void
 }
 
-export default function MemoCard({ memo, onEdit, onDelete }: MemoCardProps) {
+export default function MemoCard({ memo, onEdit, onDelete, onArchive }: MemoCardProps) {
   const [showActions, setShowActions] = useState(false)
 
   const formatTime = (timestamp: number) => {
@@ -65,7 +68,9 @@ export default function MemoCard({ memo, onEdit, onDelete }: MemoCardProps) {
   const tags = extractTags(memo.content)
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow">
+    <div className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow ${
+      memo.state === 'ARCHIVED' ? 'opacity-75 bg-gray-50 dark:bg-gray-900' : ''
+    }`}>
       {/* 头部：用户信息和时间 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
@@ -121,6 +126,24 @@ export default function MemoCard({ memo, onEdit, onDelete }: MemoCardProps) {
                   <CopyIcon className="w-4 h-4" />
                   <span>复制</span>
                 </button>
+                {onArchive && (
+                  <button
+                    onClick={() => onArchive(memo.id, memo.state !== 'ARCHIVED')}
+                    className="w-full flex items-center space-x-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    {memo.state === 'ARCHIVED' ? (
+                      <>
+                        <ArchiveRestoreIcon className="w-4 h-4" />
+                        <span>取消归档</span>
+                      </>
+                    ) : (
+                      <>
+                        <ArchiveIcon className="w-4 h-4" />
+                        <span>归档</span>
+                      </>
+                    )}
+                  </button>
+                )}
                 {onDelete && (
                   <button
                     onClick={() => onDelete(memo.id)}

@@ -23,6 +23,7 @@ export interface Memo {
   content: string;
   visibility: 'PUBLIC' | 'PRIVATE';
   pinned: number;
+  state?: 'NORMAL' | 'ARCHIVED';
   created_at: number;
   updated_at: number;
   tags?: Tag[];
@@ -34,6 +35,7 @@ export interface CreateMemoRequest {
   content: string;
   visibility?: 'PUBLIC' | 'PRIVATE';
   pinned?: boolean;
+  state?: 'NORMAL' | 'ARCHIVED';
   tags?: string[];
 }
 
@@ -117,6 +119,7 @@ export interface PaginatedResponse<T> {
 // 查询参数类型
 export interface MemosQueryParams extends PaginationParams {
   visibility?: 'PUBLIC' | 'PRIVATE' | 'ALL';
+  state?: 'NORMAL' | 'ARCHIVED' | 'ALL';
   tag?: string;
   search?: string;
   pinned?: boolean;
@@ -168,6 +171,7 @@ export interface MemoFormData {
   content: string;
   visibility: 'PUBLIC' | 'PRIVATE';
   pinned: boolean;
+  state?: 'NORMAL' | 'ARCHIVED';
   tags: string[];
 }
 

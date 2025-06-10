@@ -13,6 +13,7 @@ memos.get('/', optionalAuthMiddleware, async (c) => {
     
     // 解析查询参数
     const visibility = url.searchParams.get('visibility');
+    const state = url.searchParams.get('state');
     const tag = url.searchParams.get('tag');
     const search = url.searchParams.get('search');
     const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '50')));
@@ -39,6 +40,12 @@ memos.get('/', optionalAuthMiddleware, async (c) => {
       // 未登录用户：只能看到公开memo
       whereConditions.push('m.visibility = ?');
       queryParams.push('PUBLIC');
+    }
+    
+    // State 过滤
+    if (state && state !== 'ALL') {
+      whereConditions.push('m.state = ?');
+      queryParams.push(state);
     }
     
     // 标签过滤
@@ -111,8 +118,9 @@ memos.post('/', authMiddleware, async (c) => {
     const content = sanitizeMarkdown(body.content);
     const visibility = body.visibility || 'PRIVATE';
     const pinned = body.pinned ? 1 : 0;
+    const state = body.state || 'NORMAL';
     
-    const insertQuery = 'INSERT INTO memos (user_id, content, visibility, pinned, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)';
+    const insertQuery = 'INSERT INTO memos (user_id, content, visibility, pinned, state, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)';
     const timestamp = getCurrentTimestamp();
     
     const result = await c.env.DB.prepare(insertQuery).bind(
@@ -120,6 +128,7 @@ memos.post('/', authMiddleware, async (c) => {
       content,
       visibility,
       pinned,
+      state,
       timestamp,
       timestamp
     ).run();
@@ -167,14 +176,16 @@ memos.put('/:id', authMiddleware, async (c) => {
     const content = body.content ? sanitizeMarkdown(body.content) : existingMemo.content;
     const visibility = body.visibility || existingMemo.visibility;
     const pinned = body.pinned !== undefined ? (body.pinned ? 1 : 0) : existingMemo.pinned;
+    const state = body.state || existingMemo.state || 'NORMAL';
     
-    const updateQuery = 'UPDATE memos SET content = ?, visibility = ?, pinned = ?, updated_at = ? WHERE id = ?';
+    const updateQuery = 'UPDATE memos SET content = ?, visibility = ?, pinned = ?, state = ?, updated_at = ? WHERE id = ?';
     const timestamp = getCurrentTimestamp();
     
     await c.env.DB.prepare(updateQuery).bind(
       content,
       visibility,
       pinned,
+      state,
       timestamp,
       id
     ).run();
