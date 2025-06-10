@@ -13,9 +13,10 @@ import {
   PaletteIcon,
   UsersIcon,
   SettingsIcon,
-  InfoIcon
+  InfoIcon,
+  EditIcon
 } from 'lucide-react'
-import { settingsApi, authApi } from '@/utils/api'
+import { settingsApi, authApi, userApi } from '@/utils/api'
 import { useAppStore, useAuthStore } from '@/store'
 import { Settings, User, ApiToken, CreateApiTokenRequest } from '@/types'
 import { useNavigate } from 'react-router-dom'
@@ -42,6 +43,12 @@ export default function SettingsPage() {
   const [customCSS, setCustomCSS] = useState('')
   const [customJS, setCustomJS] = useState('')
   
+  // 修改密码相关
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+  
   // API令牌管理
   const [tokens, setTokens] = useState<ApiToken[]>([])
   const [showTokenForm, setShowTokenForm] = useState(false)
@@ -53,6 +60,7 @@ export default function SettingsPage() {
   // 用户管理
   const [users, setUsers] = useState<User[]>([])
   const [showUserForm, setShowUserForm] = useState(false)
+  const [editingUser, setEditingUser] = useState<User | null>(null)
   const [newUser, setNewUser] = useState({
     username: '',
     password: '',
@@ -99,11 +107,13 @@ export default function SettingsPage() {
 
   const loadUsers = async () => {
     try {
-      // 这里需要添加获取用户列表的接口
-      // const usersData = await userApi.getUsers()
-      // setUsers(usersData)
+      if (currentUser?.role === 'ADMIN') {
+        const usersData = await userApi.getUsers()
+        setUsers(usersData)
+      }
     } catch (error) {
       console.error('Failed to load users:', error)
+      showMessage('error', '加载用户列表失败')
     }
   }
 
@@ -220,46 +230,7 @@ export default function SettingsPage() {
     }
   }
 
-  const createUser = async () => {
-    if (!newUser.username.trim() || !newUser.password.trim()) {
-      showMessage('error', '请填写用户名和密码')
-      return
-    }
 
-    try {
-      // 这里需要添加创建用户的接口
-      const userData: User = {
-        id: Date.now(),
-        username: newUser.username,
-        role: newUser.role,
-        created_at: Date.now() / 1000,
-        updated_at: Date.now() / 1000
-      }
-      
-      setUsers(prev => [userData, ...prev])
-      setNewUser({ username: '', password: '', role: 'USER' })
-      setShowUserForm(false)
-      showMessage('success', '用户创建成功')
-    } catch (error) {
-      showMessage('error', '创建用户失败')
-      console.error('Failed to create user:', error)
-    }
-  }
-
-  const deleteUser = async (userId: number) => {
-    if (!confirm('确定要删除这个用户吗？删除后无法恢复。')) {
-      return
-    }
-
-    try {
-      // 这里需要添加删除用户的接口
-      setUsers(prev => prev.filter(u => u.id !== userId))
-      showMessage('success', '用户删除成功')
-    } catch (error) {
-      showMessage('error', '删除用户失败')
-      console.error('Failed to delete user:', error)
-    }
-  }
 
   const copyToken = async (token: string) => {
     try {
@@ -312,6 +283,120 @@ export default function SettingsPage() {
       logout()
       navigate('/login')
     }
+  }
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showMessage('error', '请填写所有密码字段')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      showMessage('error', '新密码和确认密码不匹配')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      showMessage('error', '新密码至少需要6个字符')
+      return
+    }
+
+    setChangingPassword(true)
+    try {
+      await userApi.changePassword(currentUser!.id, {
+        currentPassword,
+        newPassword
+      })
+      showMessage('success', '密码修改成功')
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (error) {
+      console.error('Failed to change password:', error)
+      showMessage('error', '密码修改失败，请检查当前密码是否正确')
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
+  const handleCreateUser = async () => {
+    if (!newUser.username || !newUser.password) {
+      showMessage('error', '请填写用户名和密码')
+      return
+    }
+
+    if (newUser.username.length < 3) {
+      showMessage('error', '用户名至少需要3个字符')
+      return
+    }
+
+    if (newUser.password.length < 6) {
+      showMessage('error', '密码至少需要6个字符')
+      return
+    }
+
+    try {
+      const createdUser = await userApi.createUser(newUser)
+      setUsers(prev => [createdUser, ...prev])
+      setNewUser({ username: '', password: '', role: 'USER' })
+      setShowUserForm(false)
+      showMessage('success', '用户创建成功')
+    } catch (error) {
+      console.error('Failed to create user:', error)
+      showMessage('error', '用户创建失败，用户名可能已存在')
+    }
+  }
+
+  const handleUpdateUser = async () => {
+    if (!editingUser) return
+
+    try {
+      const updatedUser = await userApi.updateUser(editingUser.id, {
+        username: newUser.username || undefined,
+        password: newUser.password || undefined,
+        role: newUser.role
+      })
+      
+      setUsers(prev => prev.map(user => user.id === editingUser.id ? updatedUser : user))
+      setEditingUser(null)
+      setNewUser({ username: '', password: '', role: 'USER' })
+      setShowUserForm(false)
+      showMessage('success', '用户更新成功')
+    } catch (error) {
+      console.error('Failed to update user:', error)
+      showMessage('error', '用户更新失败')
+    }
+  }
+
+  const handleDeleteUser = async (userId: number) => {
+    if (!confirm('确定要删除这个用户吗？这将删除用户的所有数据！')) {
+      return
+    }
+
+    try {
+      await userApi.deleteUser(userId)
+      setUsers(prev => prev.filter(user => user.id !== userId))
+      showMessage('success', '用户删除成功')
+    } catch (error) {
+      console.error('Failed to delete user:', error)
+      showMessage('error', '用户删除失败')
+    }
+  }
+
+  const handleEditUser = (user: User) => {
+    setEditingUser(user)
+    setNewUser({
+      username: user.username,
+      password: '',
+      role: user.role
+    })
+    setShowUserForm(true)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingUser(null)
+    setNewUser({ username: '', password: '', role: 'USER' })
+    setShowUserForm(false)
   }
 
   const weekDayOptions = [
@@ -586,9 +671,12 @@ export default function SettingsPage() {
               </button>
             </div>
 
-            {/* 新用户创建表单 */}
+            {/* 用户创建/编辑表单 */}
             {showUserForm && (
               <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h3 className="text-base font-medium text-gray-900 dark:text-white mb-4">
+                  {editingUser ? '编辑用户' : '创建新用户'}
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                   <input
                     type="text"
@@ -601,7 +689,7 @@ export default function SettingsPage() {
                     type="password"
                     value={newUser.password}
                     onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
-                    placeholder="密码"
+                    placeholder={editingUser ? "密码（留空表示不修改）" : "密码"}
                     className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <select
@@ -615,13 +703,13 @@ export default function SettingsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={createUser}
+                    onClick={editingUser ? handleUpdateUser : handleCreateUser}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
                   >
-                    创建
+                    {editingUser ? '更新用户' : '创建用户'}
                   </button>
                   <button
-                    onClick={() => setShowUserForm(false)}
+                    onClick={handleCancelEdit}
                     className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
                   >
                     取消
@@ -655,14 +743,24 @@ export default function SettingsPage() {
                         </div>
                       </div>
                     </div>
-                                         {user.id !== currentUser?.id && (
+                       <div className="flex items-center gap-2">
                       <button
-                        onClick={() => deleteUser(user.id)}
-                        className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                        onClick={() => handleEditUser(user)}
+                        className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+                        title="编辑用户"
                       >
-                        <TrashIcon className="w-4 h-4" />
+                        <EditIcon className="w-4 h-4" />
                       </button>
-                    )}
+                      {user.id !== currentUser?.id && (
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                          title="删除用户"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
@@ -695,6 +793,61 @@ export default function SettingsPage() {
                       {currentUser?.role === 'ADMIN' ? '管理员' : '普通用户'}
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 修改密码 */}
+            <div>
+              <h3 className="text-base font-medium text-gray-900 dark:text-white mb-3">修改密码</h3>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      当前密码
+                    </label>
+                    <input
+                      type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="请输入当前密码"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      新密码
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="请输入新密码（至少6个字符）"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      确认新密码
+                    </label>
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="请再次输入新密码"
+                    />
+                  </div>
+                  
+                  <button
+                    onClick={handleChangePassword}
+                    disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg font-medium transition-colors"
+                  >
+                    {changingPassword ? '修改中...' : '修改密码'}
+                  </button>
                 </div>
               </div>
             </div>

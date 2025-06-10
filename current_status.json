@@ -1,0 +1,40 @@
+{
+  "host": "memos-lite",
+  "profile": {
+    "mode": "prod",
+    "version": "0.24.0",
+    "data": "/var/opt/memos",
+    "dsn": "cloudflare-d1",
+    "addr": "0.0.0.0",
+    "port": 5230,
+    "driver": "d1"
+  },
+  "db": {
+    "type": "cloudflare-d1"
+  },
+  "allowSignUp": false,
+  "additionalScript": "",
+  "additionalStyle": "",
+  "disablePasswordLogin": false,
+  "disablePublicMemos": false,
+  "maxUploadSizeMiB": 32,
+  "enableWebhook": false,
+  "memo": {
+    "displayWithUpdatedTs": false,
+    "enableComment": true,
+    "enableAutoCompact": false,
+    "enableDoubleClickEdit": true,
+    "enableLinkPreview": true,
+    "enableAutoSave": true,
+    "enableLocationService": false,
+    "enableTagSuggestion": true
+  },
+  "customizedProfile": {
+    "title": "Memos Lite",
+    "description": "轻量级备忘录系统",
+    "logoUrl": "",
+    "locale": "zh-CN",
+    "appearance": "system",
+    "externalUrl": ""
+  }
+}

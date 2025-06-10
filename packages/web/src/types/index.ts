@@ -77,6 +77,23 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface CreateUserRequest {
+  username: string;
+  password: string;
+  role: 'USER' | 'ADMIN';
+}
+
+export interface UpdateUserRequest {
+  username?: string;
+  password?: string;
+  role?: 'USER' | 'ADMIN';
+}
+
 export interface ApiToken {
   id: number;
   name: string;

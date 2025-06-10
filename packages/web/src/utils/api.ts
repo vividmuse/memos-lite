@@ -198,6 +198,30 @@ export const userApi = {
     const response = await api.get<ApiResponse<User[]>>('/api/v1/users');
     return handleApiResponse(response);
   },
+
+  // 修改密码
+  changePassword: async (userId: number, data: { currentPassword: string; newPassword: string }): Promise<void> => {
+    const response = await api.put<ApiResponse<void>>(`/api/v1/users/${userId}/password`, data);
+    handleApiResponse(response);
+  },
+
+  // 创建用户（管理员）
+  createUser: async (data: { username: string; password: string; role: 'USER' | 'ADMIN' }): Promise<User> => {
+    const response = await api.post<ApiResponse<User>>('/api/v1/users', data);
+    return handleApiResponse(response);
+  },
+
+  // 更新用户（管理员）
+  updateUser: async (userId: number, data: { username?: string; password?: string; role?: 'USER' | 'ADMIN' }): Promise<User> => {
+    const response = await api.put<ApiResponse<User>>(`/api/v1/users/${userId}`, data);
+    return handleApiResponse(response);
+  },
+
+  // 删除用户（管理员）
+  deleteUser: async (userId: number): Promise<void> => {
+    const response = await api.delete<ApiResponse<void>>(`/api/v1/users/${userId}`);
+    handleApiResponse(response);
+  },
 };
 
 // 设置相关API
